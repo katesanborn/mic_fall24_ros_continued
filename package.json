@@ -1,5 +1,5 @@
 {
-  "name": "mic_fall24_ros",
+  "name": "mic_fall24_ros_continued",
   "scripts": {
     "start": "node app.js",
     "test": "node ./node_modules/mocha/bin/mocha --recursive test",
@@ -22,7 +22,7 @@
     "webgme": "^2.23.0"
   },
   "dependencies": {
-    "mic_fall24_ros": "file:",
+    "mic_fall24_ros_continued": "file:",
     "webgme-bindings": "latest"
   }
 }

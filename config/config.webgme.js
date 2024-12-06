@@ -20,10 +20,10 @@ config.seedProjects.basePaths.push(__dirname + '/../src/seeds/ROSLaunch');
 
 // Add requirejs paths
 config.requirejsPaths = {
-  'mic_fall24_ros': './src/common'
+  'mic_fall24_ros_continued': './src/common'
 };
 
 
-config.mongo.uri = 'mongodb://127.0.0.1:27017/mic_fall24_ros';
+config.mongo.uri = 'mongodb://127.0.0.1:27017/mic_fall24_ros_continued';
 validateConfig(config);
 module.exports = config;
