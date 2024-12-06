@@ -1,0 +1,29 @@
+{
+  "components": {
+    "visualizers": {},
+    "plugins": {
+      "ExportLaunch": {
+        "src": "src/plugins/ExportLaunch",
+        "test": "test/plugins/ExportLaunch"
+      },
+      "MakeConnections": {
+        "src": "src/plugins/MakeConnections",
+        "test": "test/plugins/MakeConnections"
+      },
+      "ImportLaunch": {
+        "src": "src/plugins/ImportLaunch",
+        "test": "test/plugins/ImportLaunch"
+      }
+    },
+    "seeds": {
+      "ROSLaunch": {
+        "src": "src/seeds/ROSLaunch"
+      }
+    }
+  },
+  "dependencies": {
+    "visualizers": {},
+    "plugins": {},
+    "seeds": {}
+  }
+}
