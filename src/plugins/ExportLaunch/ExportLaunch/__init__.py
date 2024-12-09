@@ -26,14 +26,12 @@ class ExportLaunch(PluginBase):
         visited_nodes = []
         ignoreMetaType = ["GroupPublisher","GroupSubscriber","Subscriber","Topic","Publisher"]
         
-        
-        meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher"]
-
         def get_type(node):
+            meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test"]
             base_type = core.get_base(node)
-
-            if core.get_attribute(base_type, 'name') not in meta_types:
+            while base_type and core.get_attribute(base_type, 'name') not in meta_types:
                 base_type = core.get_base(base_type)
+            return core.get_attribute(base_type, 'name')
 
             return core.get_attribute(base_type, 'name')
         

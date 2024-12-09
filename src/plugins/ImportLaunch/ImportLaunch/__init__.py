@@ -65,9 +65,9 @@ class ImportLaunch(PluginBase):
 
         # Parse the ROS launch file into a structured dictionary
         launch_data = self.parse_ros_launch(input)
-        meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher"]
 
         def get_type(node):
+            meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test"]
             base_type = core.get_base(node)
             while base_type and core.get_attribute(base_type, 'name') not in meta_types:
                 base_type = core.get_base(base_type)
@@ -156,10 +156,13 @@ class ImportLaunch(PluginBase):
                         logger.info(f"Created new node: {name_attribute} with attributes from input.")
 
                     for attr, value in attributes.items():
-                        if value.lower() == "true":
-                            core.set_attribute(child_node, attr, True)
-                        elif value.lower() == "false":
-                            core.set_attribute(child_node, attr, False)
+                        attribute_value = core.get_attribute(child_node, attr)
+                        
+                        if isinstance(attribute_value, bool):
+                            if value.lower() == "true":
+                                core.set_attribute(child_node, attr, True)
+                            elif value.lower() == "false":
+                                core.set_attribute(child_node, attr, False)
                         else:
                             core.set_attribute(child_node, attr, value)
 
