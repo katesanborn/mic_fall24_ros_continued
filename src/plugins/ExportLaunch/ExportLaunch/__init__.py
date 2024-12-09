@@ -18,21 +18,18 @@ logger.addHandler(handler)
 
 class ExportLaunch(PluginBase):
     def main(self):
-        indent=0
         active_node = self.active_node
         core = self.core
         logger = self.logger
         
         visited_nodes = []
-        ignoreMetaType = ["GroupPublisher","GroupSubscriber","Subscriber","Topic","Publisher"]
+        ignoreMetaType = ["GroupPublisher", "GroupSubscriber", "Subscriber", "Topic", "Publisher"]
         
         def get_type(node):
             meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test"]
             base_type = core.get_base(node)
             while base_type and core.get_attribute(base_type, 'name') not in meta_types:
                 base_type = core.get_base(base_type)
-            return core.get_attribute(base_type, 'name')
-
             return core.get_attribute(base_type, 'name')
         
         def xmlGenerator(activeNode,indent = 0,topLevel = True):
@@ -43,146 +40,299 @@ class ExportLaunch(PluginBase):
                 result += " " * indent + "\n<launch>\n"
                 
             if node_path in visited_nodes:
-                #logger.warning(f"Node already visited, skipping: {node_path}")
-                return result +'\n</launch>'
+                return result + '\n</launch>'
             
             visited_nodes.append(node_path)
             children = core.load_children(activeNode)
             
             for child in children:
-                
-                meta_type = core.get_meta_type(child)
-                metaTypeName = core.get_attribute(meta_type,'name')
-                childName = core.get_attribute(child,'name')
-                logger.info(f"metaTypeName {metaTypeName}")
+                childName = core.get_attribute(child, 'name')
                 base_Name = get_type(child)
+                
                 if base_Name in ignoreMetaType:
                     continue
-                #logger.info(f"{core.get_attribute(child, 'pkg')} {core.get_attribute(child, 'type')} {core.get_attribute(child, 'args')} {core.get_attribute(child, 'name')} core.get_attribute(child, 'args')")
+                
                 if base_Name == "Argument":
                     attributes = []
+                    
                     arg_name = core.get_attribute(child, 'name')
                     arg_value = core.get_attribute(child, 'value')
                     default = core.get_attribute(child, 'default')
-                    logger.info(f"{arg_name} {arg_value}")
-                    attributes = []
+                    doc = core.get_attribute(child, 'doc')
+
                     if arg_name:
                         attributes.append(f'name="{arg_name}"')
                     if arg_value:
                         attributes.append(f'value="{arg_value}"')
                     if default:
                         attributes.append(f'default="{default}"')
+                    if doc:
+                        attributes.append(f'doc="{doc}"')
+                    
                     attribute_string = " ".join(attributes)
+                    
                     result += f"{' ' * (indent + 2)}<arg {attribute_string}/>\n"
-                    #result += f"{' ' * indent}{childName}()\n"
                 
                 elif base_Name == "Node":
-                    #pkg = "operations"
                     attributes = []
+                    
                     pkg = core.get_attribute(child, 'pkg')
                     node_type = core.get_attribute(child, 'type')
                     args = core.get_attribute(child, 'args')
                     respawn = core.get_attribute(child, 'respawn')
+                    clear_params = core.get_attribute(child, 'clear_params')
+                    cwd = core.get_attribute(child, 'cwd')
+                    if_attr = core.get_attribute(child, 'if')
+                    launch_prefix = core.get_attribute(child, 'launch-prefix')
+                    ns = core.get_attribute(child, 'ns')
+                    output = core.get_attribute(child, 'output')
+                    required = core.get_attribute(child, 'required')
+                    respawn_delay = core.get_attribute(child, 'respawn_delay')
+                    machine = None
+                    
                     if pkg:
                         attributes.append(f'pkg="{pkg}"')
                     if node_type:
                         attributes.append(f'type="{node_type}"')
-                    if len(args)>0:
-                        logger.info(f"args len {len(args)}")
+                    if args:
                         attributes.append(f'args="{args}"')
                     if respawn:
                         attributes.append(f'respawn="{respawn}"')
+                    if respawn == True and respawn_delay != 0:
+                        attributes.append(f'respawn_delay={respawn_delay}')
+                    if clear_params:
+                        attributes.append(f'clear_params="{clear_params}"')
+                    if cwd:
+                        attributes.append(f'cwd="{cwd}')
+                    if if_attr:
+                        attributes.append(f'if="{if_attr}')
+                    if launch_prefix:
+                        attributes.append(f'launch-prefix="{launch_prefix}"')
+                    if ns:
+                        attributes.append(f'ns="{ns}"')
+                    if output:
+                        attributes.append(f'output="{output}"')
+                    if required == False:
+                        attributes.append(f'required="{required}"')
+                    if machine:
+                        attributes.append(f'machine="{machine}"')
+                    
                     attribute_string = " ".join(attributes)
+                    
                     result += f"{' ' * (indent + 2)}<node name=\"{childName}\" {attribute_string}>\n"
-                    result += xmlGenerator(child, indent + 4,topLevel = False)
+                    result += xmlGenerator(child, indent + 4, topLevel = False)
                     result += f"{' ' * (indent + 2)}</node>\n"
 
                 elif base_Name == "Remap":
                     attributes = []
+                    
                     remap_from = core.get_attribute(child, 'from')
                     remap_to = core.get_attribute(child, 'to')
-                    name = core.get_attribute(child, 'name')
-                    #result += f"{' ' * (indent + 2)}<remap name = \"{name}\" from=\"{remap_from}\" to=\"{remap_to}\"/>\n"    
+                        
                     if remap_from:
                         attributes.append(f'from="{remap_from}"')
                     if remap_to:
                         attributes.append(f'to="{remap_to}"')
-                        attribute_string = " ".join(attributes)
+                    
+                    attribute_string = " ".join(attributes)
                         
                     result += f"{' ' * (indent + 2)}<remap {attribute_string}/>\n"
                 
                 elif base_Name == "Include":
                     attributes = []
+                    
                     file_name = core.get_attribute(child, 'name')
-                    file_name = core.get_attribute(child, 'name')
+                    clear_params = core.get_attribute(child, 'clear_params')
+                    ns = core.get_attribute(child, "ns")
+                    pass_all_args = core.get_attribute(child, "pass_all_args")
+
                     if file_name:
-                        if '.launch' not in file_name:
-                            logger.info(f"{file_name}")
-                            result += f"{' ' * (indent + 2)}<include file=\"{file_name}.launch\"/>\n"
-                        else:
-                            result += f"{' ' * (indent + 2)}<include file=\"{file_name}\"/>\n"
+                        attributes.append(f'file="{file_name}"')
+                    if clear_params:
+                        attributes.append(f'clear_params="{clear_params}"')
+                    if ns:
+                        attributes.append(f'ns="{ns}"')
+                    if pass_all_args:
+                        attributes.append(f'pass_all_args="{pass_all_args}"')
+                    
+                    attribute_string = " ".join(attributes)
+                    
+                    result += f"{' ' * (indent + 2)}<include {attribute_string}>\n"
+                    result += xmlGenerator(child, indent + 4, topLevel = False)          
+                    result += f"{' ' * (indent + 2)}</include>\n"
                 
                 elif base_Name == "Group":
                     attributes = []
+                    
                     ns = core.get_attribute(child, 'name')
-                    result += f"{' ' * (indent + 2)}<group ns=\"{ns}\">\n"
+                    clear_params = core.get_attribute(child, 'clear_params')
+                    
+                    if ns:
+                        attributes.append(f'ns="{ns}"')
+                    if clear_params:
+                        attributes.append(f'clear_params="{clear_params}"')
+                    
+                    attribute_string = " ".join(attributes)
+                    
+                    result += f"{' ' * (indent + 2)}<group {attribute_string}>\n"
                     # Recursively process children of the group
-                    result += xmlGenerator(child, indent + 4,topLevel = False)          
+                    result += xmlGenerator(child, indent + 4, topLevel = False)          
                     result += f"{' ' * (indent + 2)}</group>\n"
                 
                 elif base_Name == "Parameter":
                     attributes = []
+                    
                     name = core.get_attribute(child, 'name')
                     command = core.get_attribute(child, 'command')
                     value = core.get_attribute(child, 'value')
+                    binfile = core.get_attribute(child, 'binfile')
+                    textfile = core.get_attribute(child, 'textfile')
+                    type = core.get_attribute(child, 'type')
                     
-                    # Recursively process children of the group
-                    result += xmlGenerator(child, indent + 4,topLevel = False)
-                    #result += f"{' ' * (indent + 2)}</param>\n"
                     if name:
                         attributes.append(f'name="{name}"')
                     if command:
                         attributes.append(f'command="{command}"')
                     if value:
                         attributes.append(f'value="{value}"')
+                    if binfile:
+                        attributes.append(f'binfile="{binfile}"')
+                    if textfile:
+                        attributes.append(f'textfile="{textfile}"')
+                    if type:
+                        attributes.append(f'type="{type}"')
+                        
                     attribute_string = " ".join(attributes)
-                    if attribute_string:
-                        result += f"{' ' * (indent + 2)}<param {attribute_string}/>\n"
+                    
+                    result += f"{' ' * (indent + 2)}<param {attribute_string}/>\n"
                 
                 elif base_Name == "rosparam":
                     attributes = []
+                    
                     name = core.get_attribute(child, 'name')
                     command = core.get_attribute(child, 'command')
                     file = core.get_attribute(child, 'file')
                     param = core.get_attribute(child, 'param')
-                    #result += f"{' ' * (indent + 2)}<rosParam name=\"{name}\" command=\"{command}\" file = \"{file}\" param = \"{param}\">\n"
-                    # Recursively process children of the group
+                    ns = core.get_attribute(child, 'ns')
+                    subst_value = core.get_attribute(child, 'subst_value')
+                    
                     if command:
                         attributes.append(f'command="{command}"')
                     if file:
                         attributes.append(f'file="{file}"')
                     if param:
                         attributes.append(f'param="{param}"')
-                    attribute_string = " ".join(attributes)
-                    if attribute_string:
-                        result += f"{' ' * (indent + 2)}<rosparam {attribute_string}>\n"           
+                    if ns:
+                        attributes.append(f'ns="{ns}"')
+                    if subst_value == False:
+                        attributes.append(f'subst_value="{subst_value}"')
                     
-                        
-                    result += xmlGenerator(child, indent + 4,topLevel = False)
+                    attribute_string = " ".join(attributes)
+                    
+                    result += f"{' ' * (indent + 2)}<rosparam {attribute_string}>\n"
+                    result += xmlGenerator(child, indent + 4, topLevel = False)
                     result += f"{' ' * (indent + 2)}</rosparam>\n"
+                    
+                elif base_Name == "Machine":
+                    attributes = []
+                    
+                    name = core.get_attribute(child, 'name')
+                    address = core.get_attribute(child, 'address')
+                    env_loader = core.get_attribute(child, 'env-loader')
+                    default = core.get_attribute(child, 'default')
+                    user = core.get_attribute(child, 'user')
+                    password = core.get_attribute(child, 'password')
+                    timeout = core.get_attribute(child, 'timeout')
+                    
+                    if name:
+                        attributes.append(f'name="{name}"')
+                    if address:
+                        attributes.append(f'address="{address}"')
+                    if env_loader:
+                        attributes.append(f'env-loader="{env_loader}"')
+                    if default:
+                        attributes.append(f'default="{default}"')
+                    if user:
+                        attributes.append(f'user="{user}"')
+                    if password:
+                        attributes.append(f'password="{password}"')
+                    if timeout != 10:
+                        attributes.append(f'timeout="{timeout}"')
+                        
+                    attribute_string = " ".join(attributes)
+                        
+                    result += f"{' ' * (indent + 2)}<machine {attribute_string}>\n"           
+                    result += xmlGenerator(child, indent + 4,topLevel = False)
+                    result += f"{' ' * (indent + 2)}</machine>\n"
+                
+                elif base_Name == "Env":
+                    attributes = []
+                    
+                    name = core.get_attribute(child, 'name')
+                    value = core.get_attribute(child, 'value')
+                    
+                    if name:
+                        attributes.append(f'name="{name}"')
+                    if value:
+                        attributes.append(f'value="{value}"')
+                        
+                    attribute_string = " ".join(attributes)
+                        
+                    result += f"{' ' * (indent + 2)}<env {attribute_string}/>\n"     
+                
+                elif base_Name == "Test":
+                    attributes = []
+                    
+                    test_name = core.get_attribute(child, 'test-name')
+                    node_type = core.get_attribute(child, 'type')
+                    pkg = core.get_attribute(child, 'pkg')
+                    name = core.get_attribute(child, 'name')
+                    args = core.get_attribute(child, 'args')
+                    clear_params = core.get_attribute(child, 'clear_params')
+                    cwd = core.get_attribute(child, 'cwd')
+                    launch_prefix = core.get_attribute(child, 'launch-prefix')
+                    ns = core.get_attribute(child, 'ns')
+                    retry = core.get_attribute(child, 'retry')
+                    time_limit = core.get_attribute(child, 'time-limit')
+                    
+                    if pkg:
+                        attributes.append(f'pkg="{pkg}"')
+                    if test_name:
+                        attributes.append(f'test-name="{test_name}"')
+                    if node_type:
+                        attributes.append(f'type="{node_type}"')
+                    if name:
+                        attributes.append(f'name="{name}"')
+                    if args:
+                        attributes.append(f'args="{args}"')
+                    if clear_params:
+                        attributes.append(f'clear_params="{clear_params}"')    
+                    if cwd:
+                        attributes.append(f'cwd="{cwd}')
+                    if launch_prefix:
+                        attributes.append(f'launch-prefix="{launch_prefix}"')
+                    if ns:
+                        attributes.append(f'ns="{ns}"')
+                    if retry:
+                        attributes.append(f'retry="{retry}"')
+                    if time_limit != 60:
+                        attributes.append(f'time-limit="{time_limit}"')    
+                        
+                    attribute_string = " ".join(attributes)
+                    
+                    result += f"{' ' * (indent + 2)}<test {attribute_string}>\n"
+                    result += xmlGenerator(child, indent + 4, topLevel = False)
+                    result += f"{' ' * (indent + 2)}</test>\n"
                 
             if topLevel:
                 result += " " * indent + "</launch>\n"
+            
             return result
             
         output = xmlGenerator(active_node)
-        logger.info(f"output {output}")
+        logger.info(f"Output:\n{output}")
+        
         file_name = 'output.launch'
         file_hash = self.add_file(file_name, output)
+        
         logger.info(f"Output saved to file with hash: {file_hash}")
-        #artifact_name = core.get_attribute(active_node, 'name') + '_LaunchArtifact'
-        #artifact = {core.get_attribute(active_node, 'name') + '.launch': output}
-
-        # Add the artifact to the plugin
-        #self.add_artifact(artifact_name, artifact)
-        #logger.info(f"Launch file exported as artifact: {artifact_name}")
