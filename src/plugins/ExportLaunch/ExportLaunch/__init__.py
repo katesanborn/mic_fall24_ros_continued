@@ -34,7 +34,31 @@ class ExportLaunch(PluginBase):
                 base_type = core.get_base(base_type)
             return core.get_attribute(base_type, 'name')
         
-        def xmlGenerator(activeNode,indent = 0,topLevel = True):
+        def sortTags(node):
+            if get_type(node) == "Argument":
+                return 1
+            if get_type(node) == "rosparam":
+                return 2
+            if get_type(node) == "Parameter":
+                return 3
+            if get_type(node) == "Env":
+                return 4
+            if get_type(node) == "Include":
+                return 5
+            if get_type(node) == "Group":
+                return 6
+            if get_type(node) == "Machine":
+                return 7
+            if get_type(node) == "Remap":
+                return 8
+            if get_type(node) == "Node":
+                return 9
+            if get_type(node) == "Test":
+                return 10
+            
+            return 100
+        
+        def xmlGenerator(activeNode, indent = 0, topLevel = True):
             result = ""
             node_path = core.get_path(activeNode)   
             
@@ -46,6 +70,8 @@ class ExportLaunch(PluginBase):
             
             visited_nodes.append(node_path)
             children = core.load_children(activeNode)
+            
+            children = sorted(children, key = lambda x: sortTags(x))
             
             for child in children:
                 childName = core.get_attribute(child, 'name')
@@ -352,7 +378,7 @@ class ExportLaunch(PluginBase):
         output = xmlGenerator(active_node)
         logger.info(f"Output:\n{output}")
         
-        def clean_filename(filename, replacement="_"):
+        def clean_filename(filename, replacement = "_"):
             # Define invalid characters for most file systems
             invalid_chars = r'[<>:"/\\|?*\x00-\x1F]'
             # Replace invalid characters with the specified replacement
@@ -363,7 +389,7 @@ class ExportLaunch(PluginBase):
             return cleaned_name if cleaned_name else "output_launch"
 
         
-        file_name = f'{clean_filename(core.get_attribute(active_node, 'name'))}.launch'
+        file_name = clean_filename(f'{core.get_attribute(active_node, 'name')}.launch')
         file_hash = self.add_file(file_name, output)
         
         logger.info(f"Output saved to file with hash: {file_hash}")
