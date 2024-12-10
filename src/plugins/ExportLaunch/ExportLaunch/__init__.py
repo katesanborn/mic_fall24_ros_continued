@@ -84,13 +84,14 @@ class ExportLaunch(PluginBase):
                     respawn = core.get_attribute(child, 'respawn')
                     clear_params = core.get_attribute(child, 'clear_params')
                     cwd = core.get_attribute(child, 'cwd')
-                    if_attr = core.get_attribute(child, 'if')
                     launch_prefix = core.get_attribute(child, 'launch-prefix')
                     ns = core.get_attribute(child, 'ns')
                     output = core.get_attribute(child, 'output')
                     required = core.get_attribute(child, 'required')
                     respawn_delay = core.get_attribute(child, 'respawn_delay')
-                    machine = None
+                    machine = core.get_attribute(child, 'machine')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
                     
                     if pkg:
                         attributes.append(f'pkg="{pkg}"')
@@ -101,13 +102,11 @@ class ExportLaunch(PluginBase):
                     if respawn:
                         attributes.append(f'respawn="{respawn}"')
                     if respawn == True and respawn_delay != 0:
-                        attributes.append(f'respawn_delay={respawn_delay}')
+                        attributes.append(f'respawn_delay={respawn_delay}"')
                     if clear_params:
                         attributes.append(f'clear_params="{clear_params}"')
                     if cwd:
-                        attributes.append(f'cwd="{cwd}')
-                    if if_attr:
-                        attributes.append(f'if="{if_attr}')
+                        attributes.append(f'cwd="{cwd}"')
                     if launch_prefix:
                         attributes.append(f'launch-prefix="{launch_prefix}"')
                     if ns:
@@ -118,6 +117,10 @@ class ExportLaunch(PluginBase):
                         attributes.append(f'required="{required}"')
                     if machine:
                         attributes.append(f'machine="{machine}"')
+                    if if_attr:
+                        attributes.append(f'if="{if_attr}"')
+                    if unless:
+                        attributes.append(f'unless="{unless}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -147,6 +150,8 @@ class ExportLaunch(PluginBase):
                     clear_params = core.get_attribute(child, 'clear_params')
                     ns = core.get_attribute(child, "ns")
                     pass_all_args = core.get_attribute(child, "pass_all_args")
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
 
                     if file_name:
                         attributes.append(f'file="{file_name}"')
@@ -156,6 +161,10 @@ class ExportLaunch(PluginBase):
                         attributes.append(f'ns="{ns}"')
                     if pass_all_args:
                         attributes.append(f'pass_all_args="{pass_all_args}"')
+                    if if_attr:
+                        attributes.append(f'if="{if_attr}"')
+                    if unless:
+                        attributes.append(f'unless="{unless}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -168,11 +177,17 @@ class ExportLaunch(PluginBase):
                     
                     ns = core.get_attribute(child, 'name')
                     clear_params = core.get_attribute(child, 'clear_params')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
                     
                     if ns:
                         attributes.append(f'ns="{ns}"')
                     if clear_params:
                         attributes.append(f'clear_params="{clear_params}"')
+                    if if_attr:
+                        attributes.append(f'if="{if_attr}"')
+                    if unless:
+                        attributes.append(f'unless="{unless}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -310,7 +325,7 @@ class ExportLaunch(PluginBase):
                     if clear_params:
                         attributes.append(f'clear_params="{clear_params}"')    
                     if cwd:
-                        attributes.append(f'cwd="{cwd}')
+                        attributes.append(f'cwd="{cwd}"')
                     if launch_prefix:
                         attributes.append(f'launch-prefix="{launch_prefix}"')
                     if ns:
