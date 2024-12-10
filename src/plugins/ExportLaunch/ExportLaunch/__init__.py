@@ -5,6 +5,7 @@ The ExportLaunch-class is imported from both run_plugin.py and run_debug.py
 import sys
 import logging
 from webgme_bindings import PluginBase
+import re
 
 # Setup a logger
 logger = logging.getLogger('ExportLaunch')
@@ -332,7 +333,18 @@ class ExportLaunch(PluginBase):
         output = xmlGenerator(active_node)
         logger.info(f"Output:\n{output}")
         
-        file_name = 'output.launch'
+        def clean_filename(filename, replacement="_"):
+            # Define invalid characters for most file systems
+            invalid_chars = r'[<>:"/\\|?*\x00-\x1F]'
+            # Replace invalid characters with the specified replacement
+            cleaned_name = re.sub(invalid_chars, replacement, filename)
+            # Strip leading and trailing whitespace and replace any trailing dots or spaces
+            cleaned_name = cleaned_name.strip().rstrip(". ")
+            # Ensure the filename is not empty or reduced to dots/spaces
+            return cleaned_name if cleaned_name else "output_launch"
+
+        
+        file_name = f'{clean_filename(core.get_attribute(active_node, 'name'))}.launch'
         file_hash = self.add_file(file_name, output)
         
         logger.info(f"Output saved to file with hash: {file_hash}")
