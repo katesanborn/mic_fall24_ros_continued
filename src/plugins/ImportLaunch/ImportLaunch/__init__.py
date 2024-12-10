@@ -51,6 +51,11 @@ class ImportLaunch(PluginBase):
                 "attributes": attributes,  # Attributes from the XML
                 "children": [parse_element(child) for child in element]  # Recursively parse children
             }
+            
+            if tag == "rosparam":
+                # Include text content of the rosparam tag
+                parsed["text"] = element.text.strip() if element.text else ""
+            
             return parsed
 
         return parse_element(root)
@@ -67,7 +72,7 @@ class ImportLaunch(PluginBase):
         launch_data = self.parse_ros_launch(input)
 
         def get_type(node):
-            meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test"]
+            meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test", "rosparamBody"]
             base_type = core.get_base(node)
             while base_type and core.get_attribute(base_type, 'name') not in meta_types:
                 base_type = core.get_base(base_type)
@@ -154,6 +159,12 @@ class ImportLaunch(PluginBase):
                     else:
                         child_node = core.create_child(parent_node, self.META.get(tag, None) if tag in self.META else None)
                         logger.info(f"Created new node: {name_attribute} with attributes from input.")
+                        
+                        if tag == "rosparam":
+                            text = child.get("text", {})
+                            if text:
+                                rosparam_body_node = core.create_child(child_node, self.META.get("rosparamBody", None))
+                                core.set_attribute(rosparam_body_node, 'body', "\n".join(line.strip() for line in text.splitlines() if line.strip()))
 
                     for attr, value in attributes.items():
                         attribute_value = core.get_attribute(child_node, attr)

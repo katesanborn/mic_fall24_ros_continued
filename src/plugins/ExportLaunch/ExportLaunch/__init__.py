@@ -6,6 +6,7 @@ import sys
 import logging
 from webgme_bindings import PluginBase
 import re
+import textwrap
 
 # Setup a logger
 logger = logging.getLogger('ExportLaunch')
@@ -27,7 +28,7 @@ class ExportLaunch(PluginBase):
         ignoreMetaType = ["GroupPublisher", "GroupSubscriber", "Subscriber", "Topic", "Publisher"]
         
         def get_type(node):
-            meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test"]
+            meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test", "rosparamBody"]
             base_type = core.get_base(node)
             while base_type and core.get_attribute(base_type, 'name') not in meta_types:
                 base_type = core.get_base(base_type)
@@ -324,6 +325,9 @@ class ExportLaunch(PluginBase):
                     result += f"{' ' * (indent + 2)}<test {attribute_string}>\n"
                     result += xmlGenerator(child, indent + 4, topLevel = False)
                     result += f"{' ' * (indent + 2)}</test>\n"
+                    
+                elif "rosparamBody":
+                    result += textwrap.indent(core.get_attribute(child, 'body'), f"{' ' * (indent + 2)}") + "\n"
                 
             if topLevel:
                 result += " " * indent + "</launch>\n"
