@@ -326,7 +326,7 @@ class ExportLaunch(PluginBase):
                 elif base_Name == "Test":
                     attributes = []
                     
-                    test_name = core.get_attribute(child, 'test-name')
+                    test_name = core.get_attribute(child, 'testName')
                     node_type = core.get_attribute(child, 'type')
                     pkg = core.get_attribute(child, 'pkg')
                     name = core.get_attribute(child, 'name')

@@ -22,6 +22,13 @@ class MakeConnections(PluginBase):
         core = self.core
         logger = self.logger
         
+        def get_type(node):
+            meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test", "rosparamBody"]
+            base_type = core.get_base(node)
+            while base_type and core.get_attribute(base_type, 'name') not in meta_types:
+                base_type = core.get_base(base_type)
+            return core.get_attribute(base_type, 'name')
+        
         publishers = []
         subscribers = []
         topics = []
@@ -32,8 +39,6 @@ class MakeConnections(PluginBase):
         
         def at_node(node):
             meta_node = core.get_base_type(node)
-            name = core.get_attribute(node, 'name')
-            path = core.get_path(node)
             meta_type = 'undefined'
             if meta_node:
                 meta_type = core.get_attribute(meta_node, 'name')
@@ -94,18 +99,19 @@ class MakeConnections(PluginBase):
         
         # Add new group nodes
         for g in groups:
-            pubs_in_g = []
-            subs_in_g = []
             def create_group_pub_sub(node):
                 meta_node = core.get_base_type(node)
                 name = core.get_attribute(node, 'name')
-                path = core.get_path(node)
                 meta_type = 'undefined'
                 if meta_node:
                     meta_type = core.get_attribute(meta_node, 'name')
                 
                 parent = core.get_parent(node)
-                parent_name = core.get_attribute(parent, "name")
+                parent_name = None
+                if get_type(parent) == "Node":
+                    parent_name = core.get_attribute(parent, "name")
+                elif get_type(parent) == "Test":
+                    parent_name = core.get_attribute(parent, "testName")
                 
                 if meta_type == "Publisher":
                     new_group_pub = core.create_child(g, self.util.META(active_node)["GroupPublisher"])
