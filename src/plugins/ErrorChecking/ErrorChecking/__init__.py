@@ -51,7 +51,7 @@ class ErrorChecking(PluginBase):
         self.util.traverse(active_node, at_node)
         
         # Check duplicate names in nodes and tests
-        logger.info("TESTING FOR DUPLICATE NAMES IN NODES AND TESTS:\n============================")
+        logger.info("TESTING FOR DUPLICATE NAMES IN NODES AND TESTS")
         test_node_names = []
         for node in all_nodes.get("Node"):
             test_node_names.append(core.get_attribute(node, "name"))
@@ -62,6 +62,26 @@ class ErrorChecking(PluginBase):
         duplicate_names = {name for name in test_node_names if test_node_names.count(name) > 1}
         
         if len(duplicate_names) > 0:
-            logger.info(f"Found duplicate names in nodes and tests: {duplicate_names}")
+            logger.error(f"Found duplicate names in nodes and tests: {duplicate_names}")
         else:
             logger.info("No duplicate names")
+            
+        # Check that an argument does not have both default and value defined
+        logger.info("TESTING FOR ERRORS IN ARG DEFINITION")
+        
+        args_with_error = []
+        
+        for arg in all_nodes.get("Argument"):
+            name = core.get_attribute(arg, "name")
+            default = core.get_attribute(arg, "default")
+            value = core.get_attribute(arg, "value")
+            
+            if default and value:
+                args_with_error.append(name)
+                
+        if len(args_with_error) > 0:
+            logger.error(f"Found args with default and value defined: {args_with_error}")
+        else:
+            logger.info("No arg definition errors")
+            
+            
