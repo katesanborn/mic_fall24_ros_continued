@@ -13,6 +13,10 @@
       "ImportLaunch": {
         "src": "src/plugins/ImportLaunch",
         "test": "test/plugins/ImportLaunch"
+      },
+      "ErrorChecking": {
+        "src": "src/plugins/ErrorChecking",
+        "test": "test/plugins/ErrorChecking"
       }
     },
     "seeds": {
