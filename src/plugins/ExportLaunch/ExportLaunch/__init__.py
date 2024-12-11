@@ -7,6 +7,7 @@ import logging
 from webgme_bindings import PluginBase
 import re
 import textwrap
+from graphlib import TopologicalSorter
 
 # Setup a logger
 logger = logging.getLogger('ExportLaunch')
@@ -33,6 +34,34 @@ class ExportLaunch(PluginBase):
             while base_type and core.get_attribute(base_type, 'name') not in meta_types:
                 base_type = core.get_base(base_type)
             return core.get_attribute(base_type, 'name')
+        
+        def get_arg_from_string(arg_string):
+            pattern = r"\$\(\s*arg\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\)"
+            return re.findall(pattern, arg_string)
+        
+        def order_args(nodes):
+            args = [n for n in nodes if get_type(n) == "Argument"]
+            not_args = [n for n in nodes if get_type(n) != "Argument"]
+            
+            precedence = {}
+            arg_dict = {}
+            
+            for arg in args:
+                name = core.get_attribute(arg, "name")
+                default = core.get_attribute(arg, "default")
+                value = core.get_attribute(arg, "value")
+                
+                precedence[name] = get_arg_from_string(default) + get_arg_from_string(value)
+                arg_dict[name] = arg
+            
+            try:
+                ts = TopologicalSorter(precedence)
+                ordered_args = list(ts.static_order())
+                args = [arg_dict[arg_name] for arg_name in ordered_args]
+            except:
+                logger.error("Circular dependency in args")
+            
+            return args + not_args
         
         def sortTags(node):
             if get_type(node) == "Argument":
@@ -71,6 +100,7 @@ class ExportLaunch(PluginBase):
             visited_nodes.append(node_path)
             children = core.load_children(activeNode)
             
+            children = order_args(children)
             children = sorted(children, key = lambda x: sortTags(x))
             
             for child in children:
