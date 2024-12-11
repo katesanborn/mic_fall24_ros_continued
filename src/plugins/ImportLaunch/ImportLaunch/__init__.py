@@ -45,6 +45,8 @@ class ImportLaunch(PluginBase):
                 attributes["name"] = attributes.pop("file")
             if tag == "group" and "ns" in attributes:
                 attributes["name"] = attributes.pop("ns")
+            if tag == "test" and "test-name" in attributes:
+                attributes["testName"] = attributes.pop("test-name")
 
             parsed = {
                 "tag": tag,  # Updated tag name
@@ -100,12 +102,28 @@ class ImportLaunch(PluginBase):
             if not node_lib:
                 logger.error("NodeLibrary not found.")
                 return
+            
+            # Load the Test Library for comparison
+            all_children = core.load_sub_tree(active_node)
+            test_lib = next((child for child in all_children if core.get_attribute(child, "name") == "TestLibrary"), None)
 
-            # Cache all nodes in the library
+            if not test_lib:
+                logger.error("TestLibrary not found.")
+                return
+
+            # Cache all nodes in the node library
             lib_children = core.load_sub_tree(node_lib)
             node_library = {
                 (core.get_attribute(node, "pkg"), core.get_attribute(node, "type")): node
                 for node in lib_children
+                if core.get_attribute(node, "pkg") and core.get_attribute(node, "type")
+            }
+            
+            # Cache all tests in the test library
+            test_lib_children = core.load_sub_tree(test_lib)
+            test_library = {
+                (core.get_attribute(node, "pkg"), core.get_attribute(node, "type")): node
+                for node in test_lib_children
                 if core.get_attribute(node, "pkg") and core.get_attribute(node, "type")
             }
 
@@ -113,6 +131,11 @@ class ImportLaunch(PluginBase):
                 pkg = node_data.get("attributes", {}).get("pkg")
                 node_type = node_data.get("attributes", {}).get("type")
                 return node_library.get((pkg, node_type))
+            
+            def find_test_in_library(test_data):
+                pkg = test_data.get("attributes", {}).get("pkg")
+                test_type = test_data.get("attributes", {}).get("type")
+                return test_library.get((pkg, test_type))
 
             def copy_attributes_and_pub_sub(existing_node, child_node):
                 """
@@ -151,11 +174,18 @@ class ImportLaunch(PluginBase):
 
                     # Check if the node already exists in the library
                     existing_node = find_node_in_library(child)
+                    
+                    # Check if the test already exists in the library
+                    existing_test = find_test_in_library(child)
 
-                    if existing_node:
+                    if existing_node and tag == "Node":
                         logger.info(f"Node {name_attribute} found in library. Copying attributes and publishers/subscribers.")
                         child_node = core.create_child(parent_node, core.get_meta_type(existing_node))
                         copy_attributes_and_pub_sub(existing_node, child_node)
+                    elif existing_test and tag == "Test":
+                        logger.info(f"Test {attributes.get("testName")} found in library. Copying attributes and publishers/subscribers.")
+                        child_node = core.create_child(parent_node, core.get_meta_type(existing_test))
+                        copy_attributes_and_pub_sub(existing_test, child_node)
                     else:
                         child_node = core.create_child(parent_node, self.META.get(tag, None) if tag in self.META else None)
                         logger.info(f"Created new node: {name_attribute} with attributes from input.")
