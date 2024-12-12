@@ -5,6 +5,8 @@ The ErrorChecking-class is imported from both run_plugin.py and run_debug.py
 import sys
 import logging
 from webgme_bindings import PluginBase
+import re
+from graphlib import TopologicalSorter, CycleError
 
 # Setup a logger
 logger = logging.getLogger('ErrorChecking')
@@ -84,4 +86,26 @@ class ErrorChecking(PluginBase):
         else:
             logger.info("No arg definition errors")
             
+        # Check that arguments do not have a circular dependency
+        logger.info("TESTING FOR CIRCULAR DEPENDENCIES IN ARG DEFINITION")
+        
+        def get_arg_from_string(arg_string):
+            pattern = r"\$\(\s*arg\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\)"
+            return re.findall(pattern, arg_string)
+        
+        precedence = {}
+        
+        for arg in all_nodes.get("Argument"):
+            name = core.get_attribute(arg, "name")
+            default = core.get_attribute(arg, "default")
+            value = core.get_attribute(arg, "value")
+            
+            precedence[name] = get_arg_from_string(default) + get_arg_from_string(value)
+        
+        try:
+            ts = TopologicalSorter(precedence)
+            ordered_args = list(ts.static_order())
+            logger.info("No circular dependencies in args")
+        except CycleError as e:
+            logger.error(f"Circular dependency in args: {e.args[1]}")    
             
