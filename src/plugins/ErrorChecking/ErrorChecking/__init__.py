@@ -21,17 +21,10 @@ logger.addHandler(handler)
 class ErrorChecking(PluginBase):
     def main(self):
         core = self.core
-        root_node = self.root_node
         active_node = self.active_node
 
-        # name = core.get_attribute(active_node, 'name')
-
-        # logger.info('ActiveNode at "{0}" has name {1}'.format(core.get_path(active_node), name))
-
-        # core.set_attribute(active_node, 'name', 'newName')
-
-        # commit_info = self.util.save(root_node, self.commit_hash, 'master', 'Python plugin updated the model')
-        # logger.info('committed :{0}'.format(commit_info))
+        error_report = ""
+        divider = "\n=============================================================\n"
         
         def get_type(node):
             meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test", "rosparamBody"]
@@ -53,7 +46,7 @@ class ErrorChecking(PluginBase):
         self.util.traverse(active_node, at_node)
         
         # Check duplicate names in nodes and tests
-        logger.info("TESTING FOR DUPLICATE NAMES IN NODES AND TESTS")
+        error_report += "TESTING FOR DUPLICATE NAMES IN NODES AND TESTS" + divider
         test_node_names = []
         for node in all_nodes.get("Node"):
             test_node_names.append(core.get_attribute(node, "name"))
@@ -64,12 +57,12 @@ class ErrorChecking(PluginBase):
         duplicate_names = {name for name in test_node_names if test_node_names.count(name) > 1}
         
         if len(duplicate_names) > 0:
-            logger.error(f"Found duplicate names in nodes and tests: {duplicate_names}")
+            error_report += f"Found duplicate names in nodes and tests: {duplicate_names}\n"
         else:
-            logger.info("No duplicate names")
+            error_report += "No duplicate names\n"
             
         # Check that an argument does not have both default and value defined
-        logger.info("TESTING FOR ERRORS IN ARG DEFINITION")
+        error_report += "\nTESTING FOR ERRORS IN ARG DEFINITION" + divider
         
         args_with_error = []
         
@@ -82,12 +75,12 @@ class ErrorChecking(PluginBase):
                 args_with_error.append(name)
                 
         if len(args_with_error) > 0:
-            logger.error(f"Found args with default and value defined: {args_with_error}")
+            error_report += f"Found args with default and value defined: {args_with_error}\n"
         else:
-            logger.info("No arg definition errors")
+            error_report += "No arg definition errors\n"
             
         # Check that arguments do not have a circular dependency
-        logger.info("TESTING FOR CIRCULAR DEPENDENCIES IN ARG DEFINITION")
+        error_report += "\nTESTING FOR CIRCULAR DEPENDENCIES IN ARG DEFINITION" + divider
         
         def get_arg_from_string(arg_string):
             pattern = r"\$\(\s*arg\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\)"
@@ -105,7 +98,9 @@ class ErrorChecking(PluginBase):
         try:
             ts = TopologicalSorter(precedence)
             ordered_args = list(ts.static_order())
-            logger.info("No circular dependencies in args")
+            error_report += "No circular dependencies in args\n"
         except CycleError as e:
-            logger.error(f"Circular dependency in args: {e.args[1]}")    
-            
+            error_report += f"Circular dependency in args: {e.args[1]}\n"    
+        
+        
+        logger.info(error_report)
