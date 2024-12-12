@@ -11,5 +11,14 @@
   "disableBrowserSideExecution": true,
   "dependencies": [],
   "writeAccessRequired": false,
-  "configStructure": []
+  "configStructure": [
+    {
+      "name": "file",
+      "displayName": "Library config",
+      "description": "Config used to update library",
+      "value": "",
+      "valueType": "asset",
+      "readOnly": false
+    }
+  ]
 }
