@@ -24,7 +24,7 @@ class ErrorChecking(PluginBase):
         active_node = self.active_node
 
         error_report = ""
-        divider = "\n=============================================================\n"
+        divider = ":"
         
         def get_type(node):
             meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test", "rosparamBody"]
@@ -57,12 +57,12 @@ class ErrorChecking(PluginBase):
         duplicate_names = {name for name in test_node_names if test_node_names.count(name) > 1}
         
         if len(duplicate_names) > 0:
-            error_report += f"Found duplicate names in nodes and tests: {duplicate_names}\n"
+            error_report += f"Found duplicate names in nodes and tests: {duplicate_names} |"
         else:
-            error_report += "No duplicate names\n"
+            error_report += "No duplicate names |"
             
         # Check that an argument does not have both default and value defined
-        error_report += "\nTESTING FOR ERRORS IN ARG DEFINITION" + divider
+        error_report += "TESTING FOR ERRORS IN ARG DEFINITION" + divider
         
         args_with_error = []
         
@@ -75,12 +75,12 @@ class ErrorChecking(PluginBase):
                 args_with_error.append(name)
                 
         if len(args_with_error) > 0:
-            error_report += f"Found args with default and value defined: {args_with_error}\n"
+            error_report += f"Found args with default and value defined: {args_with_error} |"
         else:
-            error_report += "No arg definition errors\n"
+            error_report += "No arg definition errors |"
             
         # Check that arguments do not have a circular dependency
-        error_report += "\nTESTING FOR CIRCULAR DEPENDENCIES IN ARG DEFINITION" + divider
+        error_report += "TESTING FOR CIRCULAR DEPENDENCIES IN ARG DEFINITION" + divider
         
         def get_arg_from_string(arg_string):
             pattern = r"\$\(\s*arg\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\)"
@@ -98,9 +98,9 @@ class ErrorChecking(PluginBase):
         try:
             ts = TopologicalSorter(precedence)
             ordered_args = list(ts.static_order())
-            error_report += "No circular dependencies in args\n"
+            error_report += "No circular dependencies in args |"
         except CycleError as e:
-            error_report += f"Circular dependency in args: {e.args[1]}\n"    
+            error_report += f"Circular dependency in args: {e.args[1]} |"    
         
         
-        logger.info(error_report)
+        self.send_notification(error_report)
