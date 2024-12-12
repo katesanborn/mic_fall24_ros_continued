@@ -17,6 +17,10 @@
       "ErrorChecking": {
         "src": "src/plugins/ErrorChecking",
         "test": "test/plugins/ErrorChecking"
+      },
+      "UpdateLibrary": {
+        "src": "src/plugins/UpdateLibrary",
+        "test": "test/plugins/UpdateLibrary"
       }
     },
     "seeds": {
