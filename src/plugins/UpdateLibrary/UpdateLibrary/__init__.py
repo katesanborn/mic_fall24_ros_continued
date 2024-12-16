@@ -20,7 +20,6 @@ logger.addHandler(handler)
 class UpdateLibrary(PluginBase):
     def main(self):
         core = self.core
-        root_node = self.root_node
         active_node = self.active_node
         
         # Load library config
@@ -44,10 +43,6 @@ class UpdateLibrary(PluginBase):
         if not include_lib:
             logger.error("IncludeLibrary not found.")
             return
-
-        logger.info(f"Node library: {node_lib}")
-        logger.info(f"Test library: {test_lib}")
-        logger.info(f"Include library: {include_lib}")
         
         node_lib_children = core.load_children(node_lib)
         
