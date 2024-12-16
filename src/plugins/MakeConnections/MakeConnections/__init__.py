@@ -22,7 +22,15 @@ class MakeConnections(PluginBase):
         core = self.core
         logger = self.logger
         
-        def get_type(node):
+        def get_type(node: dict) -> str:
+            """Returns the type of the WebGME node
+
+            Args:
+                node (dict): A node in the WebGME project
+
+            Returns:
+                str: The type of the node as defined in the Launch File tab in the metamodel
+            """
             meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test", "rosparamBody"]
             base_type = core.get_base(node)
             while base_type and core.get_attribute(base_type, 'name') not in meta_types:
@@ -37,7 +45,13 @@ class MakeConnections(PluginBase):
         group_pubs = []
         group_subs = []
         
-        def at_node(node):
+        def find_types(node: dict):
+            """Stores list of nodes of ecah type in model
+
+            Args:
+                node (dict): Current node
+            """            
+            
             meta_node = core.get_base_type(node)
             meta_type = 'undefined'
             if meta_node:
@@ -57,7 +71,16 @@ class MakeConnections(PluginBase):
             if meta_type == "GroupSubscriber":
                 group_subs.append(node)
             
-        def get_connectable_ports(node):
+        def get_connectable_ports(node: dict) -> tuple:
+            """Finds all types of publishers and subscibers in the model
+
+            Args:
+                node (dict): Node to search for ports
+
+            Returns:
+                tuple: List of publishers and list of subscribers
+            """            
+            
             pubs = []
             subs = []
             
@@ -75,7 +98,15 @@ class MakeConnections(PluginBase):
             return (pubs, subs)
         
         
-        def draw_connection(pub, sub, name):
+        def draw_connection(pub: dict, sub: dict, name: str):
+            """Adds a connection between the publisher and subscriber
+
+            Args:
+                pub (dict): Publisher node to set as source
+                sub (dict): Subscriber node to set as destination
+                name (str): Name of topic being communicated
+            """            
+            
             parent = core.get_common_parent([pub, sub])
             
             new_topic = core.create_child(parent, self.util.META(active_node)["Topic"])
@@ -85,7 +116,7 @@ class MakeConnections(PluginBase):
             core.set_attribute(new_topic, 'name', name)
             
         # Get list of publishers, subscribers, topics, group pubs, group subs    
-        self.util.traverse(active_node, at_node)
+        self.util.traverse(active_node, find_types)
         
         # Delete all existing topics, group pubs, group subs
         for t in topics:
@@ -99,7 +130,13 @@ class MakeConnections(PluginBase):
         
         # Add new group nodes
         for g in groups:
-            def create_group_pub_sub(node):
+            def create_group_pub_sub(node: dict):
+                """Creates group publishers and subscibers in a group based on nodes inside
+
+                Args:
+                    node (dict): Node to parse
+                """                
+                
                 meta_node = core.get_base_type(node)
                 name = core.get_attribute(node, 'name')
                 meta_type = 'undefined'
@@ -138,7 +175,16 @@ class MakeConnections(PluginBase):
             name = core.get_attribute(s, 'name')
             sub_dict[s["nodePath"]] = {"node": s,"old_name": name, "remap_name": name}
             
-        def count_slashes(string):
+        def count_slashes(string: dict) -> int:
+            """Counts the number of slashes / in a node path of a node
+
+            Args:
+                string (dict): Node to count slashes in 
+
+            Returns:
+                int: Number of slashes in string
+            """            
+            
             return string["nodePath"].count('/')
         
         # Apply remaps in correct order
@@ -149,7 +195,13 @@ class MakeConnections(PluginBase):
             r_from = core.get_attribute(r, 'from')
             r_to = core.get_attribute(r, 'to')
             
-            def remap_fcn(node):
+            def remap_fcn(node: dict):
+                """Builds a dictionary containing the remap names of all publishers and subscribers
+
+                Args:
+                    node (dict): Node to traverse
+                """                
+                
                 meta_node = core.get_base_type(node)
                 meta_type = core.get_attribute(meta_node, 'name')
                 if meta_type == "Publisher" or meta_type == "Subscriber":
@@ -163,12 +215,15 @@ class MakeConnections(PluginBase):
             children = core.load_children(r_parent)
             for c in children:
                 self.util.traverse(c, remap_fcn)
-            
-        logger.info(f"pub dict: {pub_dict}")
-        logger.info(f"sub dict: {sub_dict}")
         
         # Draw new topic connections
-        def connect_at_node(node):
+        def connect_at_node(node: dict):
+            """Draw the connections of publishers and subscribers within a group or launch file
+
+            Args:
+                node (dict): Node to traverse
+            """            
+            
             meta_node = core.get_base_type(node)
             meta_type = core.get_attribute(meta_node, 'name')
             if not(meta_type == "LaunchFile" or meta_type == "Group"):
@@ -222,6 +277,4 @@ class MakeConnections(PluginBase):
             new_hash=new_commit_hash["hash"],
             old_hash=self.commit_hash
         )
-        
-        logger.info("DONE")
         
