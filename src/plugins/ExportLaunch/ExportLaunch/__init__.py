@@ -25,25 +25,53 @@ class ExportLaunch(PluginBase):
         core = self.core
         logger = self.logger
         
+        # Nodes in project that have been traversed
         visited_nodes = []
-        ignoreMetaType = ["GroupPublisher", "GroupSubscriber", "Subscriber", "Topic", "Publisher"]
+        # Meta types that will not be included in the launch file
+        ignore_meta_type = ["GroupPublisher", "GroupSubscriber", "Subscriber", "Topic", "Publisher"]
         
-        def get_type(node):
+        def get_type(node: dict) -> str:
+            """Returns the type of the WebGME node
+
+            Args:
+                node (dict): A node in the WebGME project
+
+            Returns:
+                str: The type of the node as defined in the Launch File tab in the metamodel
+            """
             meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test", "rosparamBody"]
             base_type = core.get_base(node)
             while base_type and core.get_attribute(base_type, 'name') not in meta_types:
                 base_type = core.get_base(base_type)
             return core.get_attribute(base_type, 'name')
         
-        def get_arg_from_string(arg_string):
+        def get_arg_from_string(arg_string: str) -> list[str]:
+            """Extract all names in string in form $(arg name)
+
+            Args:
+                arg_string (str): String to check for arguments
+
+            Returns:
+                list[str]: list of arguments found in string (if any)
+            """      
             pattern = r"\$\(\s*arg\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\)"
             return re.findall(pattern, arg_string)
         
-        def order_args(nodes):
+        def order_args(nodes: list[dict]) -> list[dict]:
+            """Sorts the args in the list of nodes so that they are ordered by precedence dependencies
+
+            Args:
+                nodes (list[dict]): All nodes to sort
+
+            Returns:
+                list[dict]: All nodes with args correctly ordered according to dependencies
+            """            
             args = [n for n in nodes if get_type(n) == "Argument"]
             not_args = [n for n in nodes if get_type(n) != "Argument"]
             
+            # Stores all arguments and the arguments that they depend on
             precedence = {}
+            # Stores all arguments by name
             arg_dict = {}
             
             for arg in args:
@@ -63,7 +91,15 @@ class ExportLaunch(PluginBase):
             
             return args + not_args
         
-        def sortTags(node):
+        def sort_tags(node: dict) -> float:
+            """Returns a number rank to sort the tags in a preferred order
+
+            Args:
+                node (dict): A node in the project
+
+            Returns:
+                float: Rank for ordering of node
+            """            
             if get_type(node) == "Argument":
                 return 1
             if get_type(node) == "rosparam":
@@ -87,12 +123,22 @@ class ExportLaunch(PluginBase):
             
             return 100
         
-        def xmlGenerator(activeNode, indent = 0, topLevel = True):
+        def xml_generator(activeNode: dict, indent = 0, topLevel = True) -> str:
+            """Generates the launch file in XML format
+
+            Args:
+                activeNode (dict): Node in projec to parse to generate launch file
+                indent (int, optional): Number of spaces to indent current tag. Defaults to 0.
+                topLevel (bool, optional): Whether or not the current node is the top-level launch file node. Defaults to True.
+
+            Returns:
+                str: Launch file in XML format
+            """            
             result = ""
             node_path = core.get_path(activeNode)   
             
             if topLevel:
-                result += " " * indent + "\n<launch>\n"
+                result += " " * indent + "<launch>\n"
                 
             if node_path in visited_nodes:
                 return result + '\n</launch>'
@@ -101,16 +147,16 @@ class ExportLaunch(PluginBase):
             children = core.load_children(activeNode)
             
             children = order_args(children)
-            children = sorted(children, key = lambda x: sortTags(x))
+            children = sorted(children, key = lambda x: sort_tags(x))
             
             for child in children:
-                childName = core.get_attribute(child, 'name')
-                base_Name = get_type(child)
+                child_name = core.get_attribute(child, 'name')
+                base_name = get_type(child)
                 
-                if base_Name in ignoreMetaType:
+                if base_name in ignore_meta_type:
                     continue
                 
-                if base_Name == "Argument":
+                if base_name == "Argument":
                     attributes = []
                     
                     arg_name = core.get_attribute(child, 'name')
@@ -131,7 +177,7 @@ class ExportLaunch(PluginBase):
                     
                     result += f"{' ' * (indent + 2)}<arg {attribute_string}/>\n"
                 
-                elif base_Name == "Node":
+                elif base_name == "Node":
                     attributes = []
                     
                     pkg = core.get_attribute(child, 'pkg')
@@ -180,11 +226,11 @@ class ExportLaunch(PluginBase):
                     
                     attribute_string = " ".join(attributes)
                     
-                    result += f"{' ' * (indent + 2)}<node name=\"{childName}\" {attribute_string}>\n"
-                    result += xmlGenerator(child, indent + 4, topLevel = False)
+                    result += f"{' ' * (indent + 2)}<node name=\"{child_name}\" {attribute_string}>\n"
+                    result += xml_generator(child, indent + 4, topLevel = False)
                     result += f"{' ' * (indent + 2)}</node>\n"
 
-                elif base_Name == "Remap":
+                elif base_name == "Remap":
                     attributes = []
                     
                     remap_from = core.get_attribute(child, 'from')
@@ -199,7 +245,7 @@ class ExportLaunch(PluginBase):
                         
                     result += f"{' ' * (indent + 2)}<remap {attribute_string}/>\n"
                 
-                elif base_Name == "Include":
+                elif base_name == "Include":
                     attributes = []
                     
                     file_name = core.get_attribute(child, 'name')
@@ -225,10 +271,10 @@ class ExportLaunch(PluginBase):
                     attribute_string = " ".join(attributes)
                     
                     result += f"{' ' * (indent + 2)}<include {attribute_string}>\n"
-                    result += xmlGenerator(child, indent + 4, topLevel = False)          
+                    result += xml_generator(child, indent + 4, topLevel = False)          
                     result += f"{' ' * (indent + 2)}</include>\n"
                 
-                elif base_Name == "Group":
+                elif base_name == "Group":
                     attributes = []
                     
                     ns = core.get_attribute(child, 'name')
@@ -249,10 +295,10 @@ class ExportLaunch(PluginBase):
                     
                     result += f"{' ' * (indent + 2)}<group {attribute_string}>\n"
                     # Recursively process children of the group
-                    result += xmlGenerator(child, indent + 4, topLevel = False)          
+                    result += xml_generator(child, indent + 4, topLevel = False)          
                     result += f"{' ' * (indent + 2)}</group>\n"
                 
-                elif base_Name == "Parameter":
+                elif base_name == "Parameter":
                     attributes = []
                     
                     name = core.get_attribute(child, 'name')
@@ -279,7 +325,7 @@ class ExportLaunch(PluginBase):
                     
                     result += f"{' ' * (indent + 2)}<param {attribute_string}/>\n"
                 
-                elif base_Name == "rosparam":
+                elif base_name == "rosparam":
                     attributes = []
                     
                     name = core.get_attribute(child, 'name')
@@ -303,10 +349,10 @@ class ExportLaunch(PluginBase):
                     attribute_string = " ".join(attributes)
                     
                     result += f"{' ' * (indent + 2)}<rosparam {attribute_string}>\n"
-                    result += xmlGenerator(child, indent + 4, topLevel = False)
+                    result += xml_generator(child, indent + 4, topLevel = False)
                     result += f"{' ' * (indent + 2)}</rosparam>\n"
                     
-                elif base_Name == "Machine":
+                elif base_name == "Machine":
                     attributes = []
                     
                     name = core.get_attribute(child, 'name')
@@ -335,10 +381,10 @@ class ExportLaunch(PluginBase):
                     attribute_string = " ".join(attributes)
                         
                     result += f"{' ' * (indent + 2)}<machine {attribute_string}>\n"           
-                    result += xmlGenerator(child, indent + 4,topLevel = False)
+                    result += xml_generator(child, indent + 4,topLevel = False)
                     result += f"{' ' * (indent + 2)}</machine>\n"
                 
-                elif base_Name == "Env":
+                elif base_name == "Env":
                     attributes = []
                     
                     name = core.get_attribute(child, 'name')
@@ -353,7 +399,7 @@ class ExportLaunch(PluginBase):
                         
                     result += f"{' ' * (indent + 2)}<env {attribute_string}/>\n"     
                 
-                elif base_Name == "Test":
+                elif base_name == "Test":
                     attributes = []
                     
                     test_name = core.get_attribute(child, 'testName')
@@ -394,7 +440,7 @@ class ExportLaunch(PluginBase):
                     attribute_string = " ".join(attributes)
                     
                     result += f"{' ' * (indent + 2)}<test {attribute_string}>\n"
-                    result += xmlGenerator(child, indent + 4, topLevel = False)
+                    result += xml_generator(child, indent + 4, topLevel = False)
                     result += f"{' ' * (indent + 2)}</test>\n"
                     
                 elif "rosparamBody":
@@ -405,10 +451,20 @@ class ExportLaunch(PluginBase):
             
             return result
             
-        output = xmlGenerator(active_node)
+        output = xml_generator(active_node)
         logger.info(f"Output:\n{output}")
         
-        def clean_filename(filename, replacement = "_"):
+        def clean_filename(filename: str, replacement = "_") -> str:
+            """Removes invalid characters from file name
+
+            Args:
+                filename (str): File name to be cleaned
+                replacement (str, optional): Character used to replace invalid characters. Defaults to "_".
+
+            Returns:
+                str: Cleaned file name
+            """            
+            
             # Define invalid characters for most file systems
             invalid_chars = r'[<>:"/\\|?*\x00-\x1F]'
             # Replace invalid characters with the specified replacement
