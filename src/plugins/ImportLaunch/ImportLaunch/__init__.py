@@ -19,24 +19,42 @@ logger.addHandler(handler)
 
 
 class ImportLaunch(PluginBase):
-    def validate_and_update_tag(self, tag):
-        """
-        Ensures the tag is lowercase for standardization, except for special cases.
-        """
+    def validate_and_update_tag(self, tag: str) -> str:
+        """Ensures the tag is lowercase for standardization, except for special cases.
+
+        Args:
+            tag (str): Tag in the XML file
+
+        Returns:
+            str: Standardized tag
+        """        
+
         if tag.lower() == "arg":  # Special case for 'arg'
             return "argument"
         if tag.lower() == "param":
             return "parameter"
         return tag.lower()  # Default to lowercase
 
-    def parse_ros_launch(self, xml_string):
-        """Parses a ROS launch file into a structured dictionary."""
+    def parse_ros_launch(self, xml_string: str) -> dict:
+        """Parses a ROS launch file into a structured dictionary.
+
+        Args:
+            xml_string (str): XML file input represented as string
+
+        Returns:
+            dict: JSON format of XML tag information 
+        """
         root = ET.fromstring(xml_string)
 
-        def parse_element(element):
-            """
-            Recursively parse an XML element into a dictionary.
-            """
+        def parse_element(element: ET.Element) -> dict:
+            """Recursively parse an XML element into a dictionary.
+
+            Args:
+                element (ET.Element): Element in XML file
+
+            Returns:
+                dict: Element translated to dict
+            """            
             tag = self.validate_and_update_tag(element.tag.split('}')[-1])  # Handle namespaces if present
             attributes = element.attrib
 
@@ -73,7 +91,15 @@ class ImportLaunch(PluginBase):
         # Parse the ROS launch file into a structured dictionary
         launch_data = self.parse_ros_launch(input)
 
-        def get_type(node):
+        def get_type(node: dict) -> str:
+            """Returns the type of the WebGME node
+
+            Args:
+                node (dict): A node in the WebGME project
+
+            Returns:
+                str: The type of the node as defined in the Launch File tab in the metamodel
+            """
             meta_types = ["LaunchFile", "Include", "Argument", "Remap", "Group", "Parameter", "rosparam", "Node", "Topic", "GroupPublisher", "GroupSubscriber", "Subscriber", "Publisher", "Machine", "Env", "Test", "rosparamBody"]
             base_type = core.get_base(node)
             while base_type and core.get_attribute(base_type, 'name') not in meta_types:
@@ -127,28 +153,59 @@ class ImportLaunch(PluginBase):
                 if core.get_attribute(node, "pkg") and core.get_attribute(node, "type")
             }
 
-            def find_node_in_library(node_data):
+            def find_node_in_library(node_data: dict) -> dict:
+                """Locates node in node library
+
+                Args:
+                    node_data (dict): Node data from XML
+
+                Returns:
+                    dict: Node in WebGME
+                """                
+                
                 pkg = node_data.get("attributes", {}).get("pkg")
                 node_type = node_data.get("attributes", {}).get("type")
                 return node_library.get((pkg, node_type))
             
-            def find_test_in_library(test_data):
+            def find_test_in_library(test_data: dict) -> dict:
+                """Locates test in test library
+
+                Args:
+                    test_data (dict): Test data from XML
+
+                Returns:
+                    dict: Test in WebGME
+                """                 
+                
                 pkg = test_data.get("attributes", {}).get("pkg")
                 test_type = test_data.get("attributes", {}).get("type")
                 return test_library.get((pkg, test_type))
 
-            def copy_attributes_and_pub_sub(existing_node, child_node):
-                """
-                Copies all attributes and publishers/subscribers from the existing library node to the new child node.
-                """
+            def copy_attributes_and_pub_sub(existing_node: dict, child_node: dict):
+                """Copies all attributes and publishers/subscribers from the existing library node to the new child node.
+
+                Args:
+                    existing_node (dict): Node found in library
+                    child_node (dict): Node to receive copies
+                """                
+                
                 for attr in core.get_attribute_names(existing_node):
                     core.set_attribute(child_node, attr, core.get_attribute(existing_node, attr))
 
                 lib_children = core.load_sub_tree(existing_node)
                 new_node_children = core.load_children(child_node)
 
-                def child_exists(child, children):
-                    """Check if a child with the same name already exists in the new node."""
+                def child_exists(child: dict, children: list[dict]) -> bool:
+                    """Check if a child with the same name already exists in the new node.
+
+                    Args:
+                        child (dict): Child node to check from library
+                        children (list[dict]): Existing children
+
+                    Returns:
+                        bool: Whether or not a child with the same name already exists in the new node
+                    """                    
+                    
                     child_name = core.get_attribute(child, "name")
                     return any(core.get_attribute(existing_child, "name") == child_name for existing_child in children)
 
@@ -159,10 +216,14 @@ class ImportLaunch(PluginBase):
                             copied_node = core.copy_node(lib_child, child_node)
                             logger.info(f"Copied {core.get_attribute(copied_node, 'name')} to {core.get_attribute(child_node, 'name')}.")
 
-            def create_child_nodes(parent_node, data):
-                """
-                Creates child nodes using attributes from the input data if the node does not exist in the library.
-                """
+            def create_child_nodes(parent_node: dict, data: dict):
+                """Creates child nodes using attributes from the input data if the node does not exist in the library.
+
+                Args:
+                    parent_node (dict): WebGME parent node
+                    data (dict): XML dict
+                """                
+
                 for child in data.get("children", []):
                     tag = child.get("tag").capitalize()
                     
