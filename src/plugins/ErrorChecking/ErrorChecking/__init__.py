@@ -105,14 +105,14 @@ class ErrorChecking(PluginBase):
         # Check that arguments do not have a circular dependency
         error_report += "TESTING FOR CIRCULAR DEPENDENCIES IN ARG DEFINITION" + divider
         
-        def get_arg_from_string(arg_string: str) -> list[str]:
+        def get_arg_from_string(arg_string: str) -> list:
             """Extract all names in string in form $(arg name)
 
             Args:
                 arg_string (str): String to check for arguments
 
             Returns:
-                list[str]: list of arguments found in string (if any)
+                list: list of arguments found in string (if any)
             """            
             pattern = r"\$\(\s*arg\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\)"
             return re.findall(pattern, arg_string)

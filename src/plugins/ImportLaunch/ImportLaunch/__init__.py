@@ -195,12 +195,12 @@ class ImportLaunch(PluginBase):
                 lib_children = core.load_sub_tree(existing_node)
                 new_node_children = core.load_children(child_node)
 
-                def child_exists(child: dict, children: list[dict]) -> bool:
+                def child_exists(child: dict, children: list) -> bool:
                     """Check if a child with the same name already exists in the new node.
 
                     Args:
                         child (dict): Child node to check from library
-                        children (list[dict]): Existing children
+                        children (list): Existing children
 
                     Returns:
                         bool: Whether or not a child with the same name already exists in the new node

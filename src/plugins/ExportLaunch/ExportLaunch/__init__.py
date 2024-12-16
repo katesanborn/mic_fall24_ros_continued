@@ -45,26 +45,26 @@ class ExportLaunch(PluginBase):
                 base_type = core.get_base(base_type)
             return core.get_attribute(base_type, 'name')
         
-        def get_arg_from_string(arg_string: str) -> list[str]:
+        def get_arg_from_string(arg_string: str) -> list:
             """Extract all names in string in form $(arg name)
 
             Args:
                 arg_string (str): String to check for arguments
 
             Returns:
-                list[str]: list of arguments found in string (if any)
+                list: list of arguments found in string (if any)
             """      
             pattern = r"\$\(\s*arg\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\)"
             return re.findall(pattern, arg_string)
         
-        def order_args(nodes: list[dict]) -> list[dict]:
+        def order_args(nodes: list) -> list:
             """Sorts the args in the list of nodes so that they are ordered by precedence dependencies
 
             Args:
-                nodes (list[dict]): All nodes to sort
+                nodes (list): All nodes to sort
 
             Returns:
-                list[dict]: All nodes with args correctly ordered according to dependencies
+                list: All nodes with args correctly ordered according to dependencies
             """            
             args = [n for n in nodes if get_type(n) == "Argument"]
             not_args = [n for n in nodes if get_type(n) != "Argument"]
