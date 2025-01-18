@@ -18,6 +18,25 @@ logger.addHandler(handler)
 
 
 class UpdateLibrary(PluginBase):
+    # helper function to lookup sheet id from the sheet's name
+    def MetaSheetIdFromName(self, sheet):
+        root = self.root_node
+        core = self.core
+        sheet_info = core.get_registry(root,'MetaSheets')
+        for info in sheet_info:
+            if(info['title'] == sheet):
+                return info['SetID']
+        return None
+    
+    # helper that takes care of adding node to meta sheet(s) properly
+    def addNodeToMeta(self, sheet, node):
+        core = self.core
+        root = self.root_node
+        sheet_id = self.MetaSheetIdFromName(sheet)
+        core.add_member(root, sheet_id, node)
+        # this is a global set collecting all meta nodes
+        core.add_member(root, "MetaAspectSet", node)
+
     def main(self):
         core = self.core
         active_node = self.active_node
@@ -71,6 +90,7 @@ class UpdateLibrary(PluginBase):
                 core.set_attribute(new_node, "name", node["node"])
                 core.set_attribute(new_node, "type", node["node"])
                 core.set_attribute(new_node, "pkg", package["package"])
+                self.addNodeToMeta("Node Library", new_node)
                 
                 # Creating a new test
                 new_test = core.create_child(test_lib, self.META.get("Test", None))
@@ -78,7 +98,8 @@ class UpdateLibrary(PluginBase):
                 core.set_attribute(new_test, "name", "test_" + node["node"])
                 core.set_attribute(new_test, "type", node["node"])
                 core.set_attribute(new_test, "pkg", package["package"])
-                
+                self.addNodeToMeta("Test Library", new_test)
+
                 # Adding publishers
                 if node["publishers"] is not None:
                     for pub in node["publishers"]:
@@ -100,11 +121,8 @@ class UpdateLibrary(PluginBase):
             for launch_file in package["launch_files"]:
                 new_include = core.create_child(include_lib, self.META.get("Include", None))
                 core.set_attribute(new_include, "name", f"$(find {package["package"]})/" + launch_file["relative_path"])
+                self.addNodeToMeta("Include Library", new_include)
         
         # Save updates
-        new_commit_hash = self.util.save(core.load_root(self.project.get_root_hash(self.commit_hash)), self.commit_hash)    
-        self.project.set_branch_hash(
-            branch_name=self.branch_name,
-            new_hash=new_commit_hash["hash"],
-            old_hash=self.commit_hash
-        )
+        self.util.save(self.root_node, self.commit_hash, self.branch_name, 'Update library from external source')    
+        
