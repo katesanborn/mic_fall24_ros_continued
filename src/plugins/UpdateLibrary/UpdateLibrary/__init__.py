@@ -121,6 +121,24 @@ class UpdateLibrary(PluginBase):
             for launch_file in package["launch_files"]:
                 new_include = core.create_child(include_lib, self.META.get("Include", None))
                 core.set_attribute(new_include, "name", f"$(find {package["package"]})/" + launch_file["relative_path"])
+                
+                if launch_file["nodes"] is not None:
+                    for node in launch_file["nodes"]:
+                        node_name = node["node"]
+                        
+                        if node["publishers"] is not None:
+                            for p in node["publishers"]:
+                                new_pub = core.create_child(new_include, self.META.get("GroupPublisher", None))
+                                core.set_attribute(new_pub, "name", p)
+                                core.set_attribute(new_pub, "nodeName", node_name)
+                            
+                        
+                        if node["subscribers"] is not None:
+                            for s in node["subscribers"]:
+                                new_sub = core.create_child(new_include, self.META.get("GroupSubscriber", None))
+                                core.set_attribute(new_sub, "name", s)
+                                core.set_attribute(new_sub, "nodeName", node_name)
+                
                 self.addNodeToMeta("Include Library", new_include)
         
         # Save updates
