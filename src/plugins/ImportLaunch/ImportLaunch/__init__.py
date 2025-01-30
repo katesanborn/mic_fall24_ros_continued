@@ -206,7 +206,6 @@ class ImportLaunch(PluginBase):
                 Returns:
                     dict: Include in WebGME
                 """
-                # logger.info(f"INCLUDE: {include_library}")
                 name = include_data.get("attributes", {}).get("name").replace("/", "") if include_data.get("attributes", {}).get("name") else None
                 return include_library.get(name)
 
