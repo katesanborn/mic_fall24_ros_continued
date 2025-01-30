@@ -136,6 +136,14 @@ class ImportLaunch(PluginBase):
             if not test_lib:
                 logger.error("TestLibrary not found.")
                 return
+            
+            # Load the Include Library for comparison
+            all_children = core.load_sub_tree(active_node)
+            include_lib = next((child for child in all_children if core.get_attribute(child, "name") == "IncludeLibrary"), None)
+
+            if not include_lib:
+                logger.error("IncludeLibrary not found.")
+                return
 
             # Cache all nodes in the node library
             lib_children = core.load_sub_tree(node_lib)
@@ -151,6 +159,14 @@ class ImportLaunch(PluginBase):
                 (core.get_attribute(node, "pkg"), core.get_attribute(node, "type")): node
                 for node in test_lib_children
                 if core.get_attribute(node, "pkg") and core.get_attribute(node, "type")
+            }
+            
+            # Cache all includes in the include library
+            include_lib_children = core.load_sub_tree(include_lib)
+            include_library = {
+                core.get_attribute(node, "name"): node
+                for node in include_lib_children
+                if core.get_attribute(node, "name")
             }
 
             def find_node_in_library(node_data: dict) -> dict:
@@ -180,6 +196,19 @@ class ImportLaunch(PluginBase):
                 pkg = test_data.get("attributes", {}).get("pkg")
                 test_type = test_data.get("attributes", {}).get("type")
                 return test_library.get((pkg, test_type))
+
+            def find_include_in_library(include_data: dict) -> dict:
+                """Locates include in include library
+
+                Args:
+                    include_data (dict): Include data from XML
+
+                Returns:
+                    dict: Include in WebGME
+                """
+                # logger.info(f"INCLUDE: {include_library}")
+                name = include_data.get("attributes", {}).get("name")
+                return include_library.get(name)
 
             def copy_attributes_and_pub_sub(existing_node: dict, child_node: dict):
                 """Copies all attributes and publishers/subscribers from the existing library node to the new child node.
@@ -211,7 +240,7 @@ class ImportLaunch(PluginBase):
 
                 for lib_child in lib_children:
                     child_type = get_type(lib_child)
-                    if child_type in ["Publisher", "Subscriber"]:
+                    if child_type in ["Publisher", "Subscriber", "GroupPublisher", "GroupSubscriber"]:
                         if not child_exists(lib_child, new_node_children):
                             copied_node = core.copy_node(lib_child, child_node)
                             logger.info(f"Copied {core.get_attribute(copied_node, 'name')} to {core.get_attribute(child_node, 'name')}.")
@@ -238,6 +267,9 @@ class ImportLaunch(PluginBase):
                     
                     # Check if the test already exists in the library
                     existing_test = find_test_in_library(child)
+                    
+                    # Check if the include already exists in the library
+                    existing_include = find_include_in_library(child)
 
                     if existing_node and tag == "Node":
                         logger.info(f"Node {name_attribute} found in library. Copying attributes and publishers/subscribers.")
@@ -247,6 +279,10 @@ class ImportLaunch(PluginBase):
                         logger.info(f"Test {attributes.get("testName")} found in library. Copying attributes and publishers/subscribers.")
                         child_node = core.create_child(parent_node, core.get_meta_type(existing_test))
                         copy_attributes_and_pub_sub(existing_test, child_node)
+                    elif existing_include and tag == "Include":
+                        logger.info(f"Include {name_attribute} found in library. Copying publishers/subscribers.")
+                        child_node = core.create_child(parent_node, core.get_meta_type(existing_include))
+                        copy_attributes_and_pub_sub(existing_include, child_node)
                     else:
                         child_node = core.create_child(parent_node, self.META.get(tag, None) if tag in self.META else None)
                         logger.info(f"Created new node: {name_attribute} with attributes from input.")
