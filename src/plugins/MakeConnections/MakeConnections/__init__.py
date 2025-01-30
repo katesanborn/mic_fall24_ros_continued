@@ -5,6 +5,7 @@ The MakeConnections-class is imported from both run_plugin.py and run_debug.py
 import sys
 import logging
 from webgme_bindings import PluginBase
+from itertools import chain
 
 # Setup a logger
 logger = logging.getLogger('MakeConnections')
@@ -122,11 +123,20 @@ class MakeConnections(PluginBase):
         for t in topics:
             core.delete_node(t)
         
+        include_group_pubs = []
+        include_group_subs = []
+        
         for p in group_pubs:
-            core.delete_node(p)
+            if get_type(core.get_parent(p)) == "Group":
+                core.delete_node(p)
+            else:
+                include_group_pubs.append(p)
         
         for s in group_subs:
-            core.delete_node(s)
+            if get_type(core.get_parent(s)) == "Group":
+                core.delete_node(s)
+            else:
+                include_group_subs.append(s)
         
         # Add new group nodes
         for g in groups:
@@ -158,6 +168,15 @@ class MakeConnections(PluginBase):
                     new_group_sub = core.create_child(g, self.util.META(active_node)["GroupSubscriber"])
                     core.set_attribute(new_group_sub, 'name', name)
                     core.set_attribute(new_group_sub, 'nodeName', parent_name)
+                    
+                if meta_type == "GroupPublisher" and get_type(parent) == "Include":
+                    new_group_pub = core.create_child(g, self.util.META(active_node)["GroupPublisher"])
+                    core.set_attribute(new_group_pub, 'name', name)
+                    core.set_attribute(new_group_pub, 'nodeName', core.get_attribute(node, 'nodeName'))
+                if meta_type == "GroupSubscriber" and get_type(parent) == "Include":
+                    new_group_sub = core.create_child(g, self.util.META(active_node)["GroupSubscriber"])
+                    core.set_attribute(new_group_sub, 'name', name)
+                    core.set_attribute(new_group_sub, 'nodeName', core.get_attribute(node, 'nodeName'))
                 
             self.util.traverse(g, create_group_pub_sub)
         
@@ -167,11 +186,11 @@ class MakeConnections(PluginBase):
         sub_dict = dict()
         
         # Set up publisher and subscriber dictionary before remap
-        for p in publishers:
+        for p in chain(publishers, include_group_pubs):
             name = core.get_attribute(p, 'name')
             pub_dict[p["nodePath"]] = {"node": p, "old_name": name, "remap_name": name}
             
-        for s in subscribers:
+        for s in chain(subscribers, include_group_subs):
             name = core.get_attribute(s, 'name')
             sub_dict[s["nodePath"]] = {"node": s,"old_name": name, "remap_name": name}
             
@@ -204,7 +223,7 @@ class MakeConnections(PluginBase):
                 
                 meta_node = core.get_base_type(node)
                 meta_type = core.get_attribute(meta_node, 'name')
-                if meta_type == "Publisher" or meta_type == "Subscriber":
+                if (meta_type == "Publisher" or meta_type == "Subscriber") or (meta_type == "GroupPublisher" and get_type(core.get_parent(node)) == "Include") or (meta_type == "GroupSubscriber" and get_type(core.get_parent(node)) == "Include"):
                     if node["nodePath"] in pub_dict:
                         if pub_dict[node["nodePath"]]["remap_name"] == r_from:
                             pub_dict[node["nodePath"]]["remap_name"] = r_to
@@ -226,7 +245,7 @@ class MakeConnections(PluginBase):
             
             meta_node = core.get_base_type(node)
             meta_type = core.get_attribute(meta_node, 'name')
-            if not(meta_type == "LaunchFile" or meta_type == "Group"):
+            if not(meta_type == "LaunchFile" or meta_type == "Group" or meta_type == "Include"):
                 return
             
             pubs, subs = get_connectable_ports(node)
@@ -239,11 +258,16 @@ class MakeConnections(PluginBase):
                 if p_type == "Publisher":
                     p_topic = pub_dict[p["nodePath"]]["remap_name"]
                 if p_type == "GroupPublisher":
-                    for nodePath, names in pub_dict.items():
-                        orig_pub = names["node"]
-                        parent = core.get_parent(orig_pub)
-                        if names["old_name"] == core.get_attribute(p, "name") and core.get_attribute(parent, "name") == core.get_attribute(p, "nodeName"):
-                            p_topic = names["remap_name"]
+                    if get_type(core.get_parent(p)) == "Group":
+                        for nodePath, names in pub_dict.items():
+                            orig_pub = names["node"]
+                            parent = core.get_parent(orig_pub)
+                            if get_type(parent) == "Node" and names["old_name"] == core.get_attribute(p, "name") and core.get_attribute(parent, "name") == core.get_attribute(p, "nodeName"):
+                                p_topic = names["remap_name"]
+                            elif get_type(parent) == "Include" and names["old_name"] == core.get_attribute(p, "name") and core.get_attribute(orig_pub, "nodeName") == core.get_attribute(p, "nodeName"):
+                                p_topic = names["remap_name"]
+                    elif get_type(core.get_parent(p)) == "Include":
+                        p_topic = pub_dict[p["nodePath"]]["remap_name"]
                 
                 for s in subs:
                     s_topic = None
@@ -253,11 +277,16 @@ class MakeConnections(PluginBase):
                     if s_type == "Subscriber":
                         s_topic = sub_dict[s["nodePath"]]["remap_name"]
                     if s_type == "GroupSubscriber":
-                        for nodePath, names in sub_dict.items():
-                            orig_sub = names["node"]
-                            parent = core.get_parent(orig_sub)
-                            if names["old_name"] == core.get_attribute(s, "name") and core.get_attribute(parent, "name") == core.get_attribute(s, "nodeName"):
-                                s_topic = names["remap_name"]
+                        if get_type(core.get_parent(s)) == "Group":
+                            for nodePath, names in sub_dict.items():
+                                orig_sub = names["node"]
+                                parent = core.get_parent(orig_sub)
+                                if get_type(parent) == "Node" and names["old_name"] == core.get_attribute(s, "name") and core.get_attribute(parent, "name") == core.get_attribute(s, "nodeName"):
+                                    s_topic = names["remap_name"]
+                                elif get_type(parent) == "Include" and names["old_name"] == core.get_attribute(s, "name") and core.get_attribute(orig_sub, "nodeName") == core.get_attribute(s, "nodeName"):
+                                    s_topic = names["remap_name"]
+                        elif get_type(core.get_parent(s)) == "Include":
+                            s_topic = sub_dict[s["nodePath"]]["remap_name"]
                                 
                     p_path_length = count_slashes(p)
                     s_path_length = count_slashes(s)
