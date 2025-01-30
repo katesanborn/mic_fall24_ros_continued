@@ -164,7 +164,7 @@ class ImportLaunch(PluginBase):
             # Cache all includes in the include library
             include_lib_children = core.load_sub_tree(include_lib)
             include_library = {
-                core.get_attribute(node, "name"): node
+                core.get_attribute(node, "name").replace("/", ""): node
                 for node in include_lib_children
                 if core.get_attribute(node, "name")
             }
@@ -207,7 +207,7 @@ class ImportLaunch(PluginBase):
                     dict: Include in WebGME
                 """
                 # logger.info(f"INCLUDE: {include_library}")
-                name = include_data.get("attributes", {}).get("name")
+                name = include_data.get("attributes", {}).get("name").replace("/", "") if include_data.get("attributes", {}).get("name") else None
                 return include_library.get(name)
 
             def copy_attributes_and_pub_sub(existing_node: dict, child_node: dict):
