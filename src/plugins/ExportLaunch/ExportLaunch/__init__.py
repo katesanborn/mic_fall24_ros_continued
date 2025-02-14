@@ -108,13 +108,13 @@ class ExportLaunch(PluginBase):
                 return 3
             if get_type(node) == "Env":
                 return 4
-            if get_type(node) == "Include":
-                return 5
-            if get_type(node) == "Group":
-                return 6
-            if get_type(node) == "Machine":
-                return 7
             if get_type(node) == "Remap":
+                return 5
+            if get_type(node) == "Include":
+                return 6
+            if get_type(node) == "Group":
+                return 7
+            if get_type(node) == "Machine":
                 return 8
             if get_type(node) == "Node":
                 return 9
