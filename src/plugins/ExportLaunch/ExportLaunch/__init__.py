@@ -204,7 +204,7 @@ class ExportLaunch(PluginBase):
                     if respawn:
                         attributes.append(f'respawn="{respawn}"')
                     if respawn == True and respawn_delay != 0:
-                        attributes.append(f'respawn_delay={respawn_delay}"')
+                        attributes.append(f'respawn_delay="{respawn_delay}"')
                     if clear_params:
                         attributes.append(f'clear_params="{clear_params}"')
                     if cwd:
