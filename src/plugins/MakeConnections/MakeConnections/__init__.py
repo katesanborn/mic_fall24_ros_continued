@@ -302,8 +302,12 @@ class MakeConnections(PluginBase):
             pubs, subs = get_connectable_ports(g)
             for p in pubs:
                 p_name = pub_dict[p["nodePath"]]["remap_name"]
+                if p_name[0] == "/":
+                    p_name = p_name[1:]
                 for s in subs:
                     s_name = sub_dict[s["nodePath"]]["remap_name"]
+                    if s_name[0] == "/":
+                        s_name = s_name[1:]
                     if p_name == s_name:
                         draw_connection(p, s, p_name)
         
