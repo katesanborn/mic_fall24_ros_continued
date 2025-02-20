@@ -193,6 +193,14 @@ class MakeConnections(PluginBase):
                 elif get_type(parent) == "Test":
                     parent_name = core.get_attribute(parent, "testName")
                     
+                    
+                if name[0] != "/":
+                    parent_type = get_type(parent)
+                    if parent_type in ["Node", "Test", "Include"]:
+                        ns = core.get_attribute(parent, "ns")
+                        if ns != "":
+                            name = ns + "/" + name
+                    
                 g_name = core.get_attribute(g, "name")
                 ns = ""
                 if g_name and name[0] != "/":
@@ -238,10 +246,28 @@ class MakeConnections(PluginBase):
         # Set up publisher and subscriber dictionary before remap
         for p in chain(publishers, include_group_pubs, new_group_pubs):
             name = core.get_attribute(p, 'name')
+            
+            if name[0] != "/":
+                parent = core.get_parent(p)
+                parent_type = get_type(parent)
+                if parent_type in ["Node", "Test", "Include"]:
+                    ns = core.get_attribute(parent, "ns")
+                    if ns != "":
+                        name = ns + "/" + name
+            
             pub_dict[p["nodePath"]] = {"node": p, "old_name": name, "remap_name": name}
             
         for s in chain(subscribers, include_group_subs, new_group_subs):
             name = core.get_attribute(s, 'name')
+            
+            if name[0] != "/":
+                parent = core.get_parent(s)
+                parent_type = get_type(parent)
+                if parent_type in ["Node", "Test", "Include"]:
+                    ns = core.get_attribute(parent, "ns")
+                    if ns != "":
+                        name = ns + "/" + name
+                    
             sub_dict[s["nodePath"]] = {"node": s,"old_name": name, "remap_name": name}
         
         # Apply remaps in correct order
