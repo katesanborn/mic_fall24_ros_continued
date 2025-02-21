@@ -43,6 +43,62 @@ class ErrorChecking(PluginBase):
                 base_type = core.get_base(base_type)
             return core.get_attribute(base_type, 'name')
         
+        def get_node_name(node: dict) -> str:
+            """Gets name of a node including all namespaces
+
+            Args:
+                node (dict): A node in the WebGME project
+
+            Returns:
+                str: Name including namespaces
+            """            
+            
+            name = core.get_attribute(node, "name")
+            
+            ns = core.get_attribute(node, "ns")
+            if ns != "" and name[0] != "/":
+                name = ns + "/" + name
+            
+            parent = core.get_parent(node)
+            
+            while get_type(parent) != "LaunchFile" and name[0] != "/":
+                if get_type(parent) == "Group":
+                    ns = core.get_attribute(parent, "name")
+                    if ns != "":
+                        name = ns + "/" + name
+                
+                parent = core.get_parent(parent)
+            
+            return name if name[0] != "/" else name[1:]
+        
+        def get_test_name(test: dict) -> str:
+            """Gets name of a test including all namespaces
+
+            Args:
+                test (dict): A test in the WebGME project
+
+            Returns:
+                str: Name including namespaces
+            """
+            
+            name = core.get_attribute(test, "testName")
+            
+            ns = core.get_attribute(test, "ns")
+            if ns != "" and name[0] != "/":
+                name = ns + "/" + name
+            
+            parent = core.get_parent(test)
+            
+            while get_type(parent) != "LaunchFile" and name[0] != "/":
+                if get_type(parent) == "Group":
+                    ns = core.get_attribute(parent, "name")
+                    if ns != "":
+                        name = ns + "/" + name
+                
+                parent = core.get_parent(parent)
+            
+            return name if name[0] != "/" else name[1:]
+        
         # Dictionary to store all nodes using type as key
         all_nodes = {}
         
@@ -67,11 +123,11 @@ class ErrorChecking(PluginBase):
         
         if all_nodes.get("Node") is not None:
             for node in all_nodes.get("Node"):
-                test_node_names.append(core.get_attribute(node, "name"))
+                test_node_names.append(get_node_name(node))
             
         if all_nodes.get("Test") is not None:
             for test in all_nodes.get("Test"):
-                test_node_names.append(core.get_attribute(test, "testName"))
+                test_node_names.append(get_test_name(test))
 
         # Make list of all node names that are repeated 
         duplicate_names = {name for name in test_node_names if test_node_names.count(name) > 1}
