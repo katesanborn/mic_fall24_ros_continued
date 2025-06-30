@@ -151,7 +151,24 @@ class MakeConnections(PluginBase):
                 return "/".join(new_name)
             else:
                 return name
+            
+        def get_remap_children(node: dict) -> list:
+            children = core.load_children(node)
+            
+            remap_children = []
+            
+            for child in children:
+                if get_type(child) == "Remap":
+                    remap_children.append(child)
+            
+            return remap_children
         
+        def get_grandparent(node: dict) -> dict:
+            try:
+                return core.get_parent(core.get_parent(node))
+            except:
+                return
+                
         # Get list of publishers, subscribers, topics, group pubs, group subs    
         self.util.traverse(active_node, find_types)
         
@@ -192,50 +209,65 @@ class MakeConnections(PluginBase):
                     parent_name = core.get_attribute(parent, "name")
                 elif get_type(parent) == "Test":
                     parent_name = core.get_attribute(parent, "testName")
-                    
-                    
+
+                remap_children = get_remap_children(parent)
+                if len(remap_children) > 0:
+                    for r in remap_children:
+                        r_from = core.get_attribute(r, 'from')
+                        r_to = core.get_attribute(r, 'to')
+                        name = remap_name(r_from, r_to, name)
+
                 if name[0] != "/":
                     parent_type = get_type(parent)
                     if parent_type in ["Node", "Test", "Include"]:
                         ns = core.get_attribute(parent, "ns")
                         if ns != "":
                             name = ns + "/" + name
-                    
+
+                remap_group_children = get_remap_children(g)
+                if len(remap_group_children) > 0:
+                    for r in remap_group_children:
+                        r_from = core.get_attribute(r, 'from')
+                        r_to = core.get_attribute(r, 'to')
+                        name = remap_name(r_from, r_to, name)
+
                 g_name = core.get_attribute(g, "name")
                 ns = ""
                 if g_name and name[0] != "/":
                     ns = g_name + "/"
-                
+
+                group_xub_name = ns + name
+
                 if meta_type == "Publisher":
                     new_group_pub = core.create_child(g, self.util.META(active_node)["GroupPublisher"])
-                    core.set_attribute(new_group_pub, 'name', ns + name)
+                    core.set_attribute(new_group_pub, 'name', group_xub_name)
                     core.set_attribute(new_group_pub, 'nodeName', parent_name)
                     new_group_pubs.append(new_group_pub)
                 if meta_type == "Subscriber":
                     new_group_sub = core.create_child(g, self.util.META(active_node)["GroupSubscriber"])
-                    core.set_attribute(new_group_sub, 'name', ns + name)
+                    core.set_attribute(new_group_sub, 'name', group_xub_name)
                     core.set_attribute(new_group_sub, 'nodeName', parent_name)
                     new_group_subs.append(new_group_sub)
-                    
+
                 if meta_type == "GroupPublisher" and get_type(parent) == "Include":
                     new_group_pub = core.create_child(g, self.util.META(active_node)["GroupPublisher"])
-                    core.set_attribute(new_group_pub, 'name', ns + name)
+                    core.set_attribute(new_group_pub, 'name', group_xub_name)
                     core.set_attribute(new_group_pub, 'nodeName', core.get_attribute(node, 'nodeName'))
                     new_group_pubs.append(new_group_pub)
                 if meta_type == "GroupSubscriber" and get_type(parent) == "Include":
                     new_group_sub = core.create_child(g, self.util.META(active_node)["GroupSubscriber"])
-                    core.set_attribute(new_group_sub, 'name', ns + name)
+                    core.set_attribute(new_group_sub, 'name', group_xub_name)
                     core.set_attribute(new_group_sub, 'nodeName', core.get_attribute(node, 'nodeName'))
                     new_group_subs.append(new_group_sub)
                     
                 if meta_type == "GroupPublisher" and get_type(parent) == "Group":
                     new_group_pub = core.create_child(g, self.util.META(active_node)["GroupPublisher"])
-                    core.set_attribute(new_group_pub, 'name', ns + name)
+                    core.set_attribute(new_group_pub, 'name', group_xub_name)
                     core.set_attribute(new_group_pub, 'nodeName', core.get_attribute(node, 'nodeName'))
                     new_group_pubs.append(new_group_pub)
                 if meta_type == "GroupSubscriber" and get_type(parent) == "Group":
                     new_group_sub = core.create_child(g, self.util.META(active_node)["GroupSubscriber"])
-                    core.set_attribute(new_group_sub, 'name', ns + name)
+                    core.set_attribute(new_group_sub, 'name', group_xub_name)
                     core.set_attribute(new_group_sub, 'nodeName', core.get_attribute(node, 'nodeName'))
                     new_group_subs.append(new_group_sub)
         
@@ -308,7 +340,7 @@ class MakeConnections(PluginBase):
                     s_name = sub_dict[s["nodePath"]]["remap_name"]
                     if s_name[0] == "/":
                         s_name = s_name[1:]
-                    if p_name == s_name:
+                    if p_name == s_name and core.get_parent(s) != core.get_parent(p) and get_grandparent(s) == get_grandparent(p):
                         draw_connection(p, s, p_name)
         
         # Save updates
