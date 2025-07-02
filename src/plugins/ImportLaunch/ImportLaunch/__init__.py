@@ -292,6 +292,9 @@ class ImportLaunch(PluginBase):
                                 rosparam_body_node = core.create_child(child_node, self.META.get("rosparamBody", None))
                                 core.set_attribute(rosparam_body_node, 'body', "\n".join(line.strip() for line in text.splitlines() if line.strip()))
 
+                    if tag == "Test" and "name" not in attributes.keys():
+                        core.set_attribute(child_node, "name", "")
+
                     for attr, value in attributes.items():
                         attribute_value = core.get_attribute(child_node, attr)
                         
