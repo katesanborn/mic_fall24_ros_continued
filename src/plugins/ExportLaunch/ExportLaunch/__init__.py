@@ -8,7 +8,6 @@ from webgme_bindings import PluginBase
 import re
 import textwrap
 from graphlib import TopologicalSorter
-from html import escape
 
 # Setup a logger
 logger = logging.getLogger('ExportLaunch')
@@ -124,6 +123,22 @@ class ExportLaunch(PluginBase):
             
             return 100
         
+        def escape_ros_attribute(value: str) -> str:
+            """Removes invalid characters from attribute in XML
+
+            Args:
+                value (str): String to fix
+
+            Returns:
+                str: Attribute with clean XML
+            """            
+            return (
+                value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace('"', "&quot;")
+            )
+        
         def xml_generator(activeNode: dict, indent = 0, topLevel = True) -> str:
             """Generates the launch file in XML format
 
@@ -168,17 +183,17 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
 
                     if arg_name:
-                        attributes.append(f'name="{escape(arg_name)}"')
+                        attributes.append(f'name="{escape_ros_attribute(arg_name)}"')
                     if arg_value:
-                        attributes.append(f'value="{escape(arg_value)}"')
+                        attributes.append(f'value="{escape_ros_attribute(arg_value)}"')
                     if default:
-                        attributes.append(f'default="{escape(default)}"')
+                        attributes.append(f'default="{escape_ros_attribute(default)}"')
                     if doc:
-                        attributes.append(f'doc="{escape(doc)}"')
+                        attributes.append(f'doc="{escape_ros_attribute(doc)}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -203,11 +218,11 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
                     
                     if pkg:
-                        attributes.append(f'pkg="{escape(pkg)}"')
+                        attributes.append(f'pkg="{escape_ros_attribute(pkg)}"')
                     if node_type:
-                        attributes.append(f'type="{escape(node_type)}"')
+                        attributes.append(f'type="{escape_ros_attribute(node_type)}"')
                     if args:
-                        attributes.append(f'args="{escape(args)}"')
+                        attributes.append(f'args="{escape_ros_attribute(args)}"')
                     if respawn:
                         attributes.append(f'respawn="{str(respawn).lower()}"')
                     if respawn == True and respawn_delay != 0:
@@ -215,21 +230,21 @@ class ExportLaunch(PluginBase):
                     if clear_params:
                         attributes.append(f'clear_params="{str(clear_params).lower()}"')
                     if cwd:
-                        attributes.append(f'cwd="{escape(cwd)}"')
+                        attributes.append(f'cwd="{escape_ros_attribute(cwd)}"')
                     if launch_prefix:
-                        attributes.append(f'launch-prefix="{escape(launch_prefix)}"')
+                        attributes.append(f'launch-prefix="{escape_ros_attribute(launch_prefix)}"')
                     if ns:
-                        attributes.append(f'ns="{escape(ns)}"')
+                        attributes.append(f'ns="{escape_ros_attribute(ns)}"')
                     if output:
-                        attributes.append(f'output="{escape(output)}"')
+                        attributes.append(f'output="{escape_ros_attribute(output)}"')
                     if required == False:
                         attributes.append(f'required="{str(required).lower()}"')
                     if machine:
-                        attributes.append(f'machine="{escape(machine)}"')
+                        attributes.append(f'machine="{escape_ros_attribute(machine)}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -246,13 +261,13 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
                         
                     if remap_from:
-                        attributes.append(f'from="{escape(remap_from)}"')
+                        attributes.append(f'from="{escape_ros_attribute(remap_from)}"')
                     if remap_to:
-                        attributes.append(f'to="{escape(remap_to)}"')
+                        attributes.append(f'to="{escape_ros_attribute(remap_to)}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                         
@@ -269,17 +284,17 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
 
                     if file_name:
-                        attributes.append(f'file="{escape(file_name)}"')
+                        attributes.append(f'file="{escape_ros_attribute(file_name)}"')
                     if clear_params:
                         attributes.append(f'clear_params="{str(clear_params).lower()}"')
                     if ns:
-                        attributes.append(f'ns="{escape(ns)}"')
+                        attributes.append(f'ns="{escape_ros_attribute(ns)}"')
                     if pass_all_args:
                         attributes.append(f'pass_all_args="{str(pass_all_args).lower()}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -296,13 +311,13 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
                     
                     if ns:
-                        attributes.append(f'ns="{escape(ns)}"')
+                        attributes.append(f'ns="{escape_ros_attribute(ns)}"')
                     if clear_params:
                         attributes.append(f'clear_params="{str(clear_params).lower()}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -324,21 +339,21 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
                     
                     if name:
-                        attributes.append(f'name="{escape(name)}"')
+                        attributes.append(f'name="{escape_ros_attribute(name)}"')
                     if command:
-                        attributes.append(f'command="{escape(command)}"')
+                        attributes.append(f'command="{escape_ros_attribute(command)}"')
                     if value:
-                        attributes.append(f'value="{escape(value)}"')
+                        attributes.append(f'value="{escape_ros_attribute(value)}"')
                     if binfile:
-                        attributes.append(f'binfile="{escape(binfile)}"')
+                        attributes.append(f'binfile="{escape_ros_attribute(binfile)}"')
                     if textfile:
-                        attributes.append(f'textfile="{escape(textfile)}"')
+                        attributes.append(f'textfile="{escape_ros_attribute(textfile)}"')
                     if type_attr:
-                        attributes.append(f'type="{escape(type_attr)}"')
+                        attributes.append(f'type="{escape_ros_attribute(type_attr)}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                         
                     attribute_string = " ".join(attributes)
                     
@@ -357,19 +372,19 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
                     
                     if command:
-                        attributes.append(f'command="{escape(command)}"')
+                        attributes.append(f'command="{escape_ros_attribute(command)}"')
                     if file:
-                        attributes.append(f'file="{escape(file)}"')
+                        attributes.append(f'file="{escape_ros_attribute(file)}"')
                     if param:
-                        attributes.append(f'param="{escape(param)}"')
+                        attributes.append(f'param="{escape_ros_attribute(param)}"')
                     if ns:
-                        attributes.append(f'ns="{escape(ns)}"')
+                        attributes.append(f'ns="{escape_ros_attribute(ns)}"')
                     if subst_value == False:
                         attributes.append(f'subst_value="{str(subst_value).lower()}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -391,23 +406,23 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
                     
                     if name:
-                        attributes.append(f'name="{escape(name)}"')
+                        attributes.append(f'name="{escape_ros_attribute(name)}"')
                     if address:
-                        attributes.append(f'address="{escape(address)}"')
+                        attributes.append(f'address="{escape_ros_attribute(address)}"')
                     if env_loader:
-                        attributes.append(f'env-loader="{escape(env_loader)}"')
+                        attributes.append(f'env-loader="{escape_ros_attribute(env_loader)}"')
                     if default:
-                        attributes.append(f'default="{escape(default)}"')
+                        attributes.append(f'default="{escape_ros_attribute(default)}"')
                     if user:
-                        attributes.append(f'user="{escape(user)}"')
+                        attributes.append(f'user="{escape_ros_attribute(user)}"')
                     if password:
-                        attributes.append(f'password="{escape(password)}"')
+                        attributes.append(f'password="{escape_ros_attribute(password)}"')
                     if timeout != 10:
                         attributes.append(f'timeout="{timeout}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                         
                     attribute_string = " ".join(attributes)
                         
@@ -424,13 +439,13 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
                     
                     if name:
-                        attributes.append(f'name="{escape(name)}"')
+                        attributes.append(f'name="{escape_ros_attribute(name)}"')
                     if value:
-                        attributes.append(f'value="{escape(value)}"')
+                        attributes.append(f'value="{escape_ros_attribute(value)}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                         
                     attribute_string = " ".join(attributes)
                         
@@ -454,31 +469,31 @@ class ExportLaunch(PluginBase):
                     unless = core.get_attribute(child, 'unless')
                     
                     if pkg:
-                        attributes.append(f'pkg="{escape(pkg)}"')
+                        attributes.append(f'pkg="{escape_ros_attribute(pkg)}"')
                     if test_name:
-                        attributes.append(f'test-name="{escape(test_name)}"')
+                        attributes.append(f'test-name="{escape_ros_attribute(test_name)}"')
                     if node_type:
-                        attributes.append(f'type="{escape(node_type)}"')
+                        attributes.append(f'type="{escape_ros_attribute(node_type)}"')
                     if name:
-                        attributes.append(f'name="{escape(name)}"')
+                        attributes.append(f'name="{escape_ros_attribute(name)}"')
                     if args:
-                        attributes.append(f'args="{escape(args)}"')
+                        attributes.append(f'args="{escape_ros_attribute(args)}"')
                     if clear_params:
                         attributes.append(f'clear_params="{str(clear_params).lower()}"')    
                     if cwd:
-                        attributes.append(f'cwd="{escape(cwd)}"')
+                        attributes.append(f'cwd="{escape_ros_attribute(cwd)}"')
                     if launch_prefix:
-                        attributes.append(f'launch-prefix="{escape(launch_prefix)}"')
+                        attributes.append(f'launch-prefix="{escape_ros_attribute(launch_prefix)}"')
                     if ns:
-                        attributes.append(f'ns="{escape(ns)}"')
+                        attributes.append(f'ns="{escape_ros_attribute(ns)}"')
                     if retry:
                         attributes.append(f'retry="{retry}"')
                     if time_limit != 60:
                         attributes.append(f'time-limit="{time_limit}"')
                     if if_attr:
-                        attributes.append(f'if="{escape(if_attr)}"')
+                        attributes.append(f'if="{escape_ros_attribute(if_attr)}"')
                     if unless:
-                        attributes.append(f'unless="{escape(unless)}"')
+                        attributes.append(f'unless="{escape_ros_attribute(unless)}"')
                         
                     attribute_string = " ".join(attributes)
                     
