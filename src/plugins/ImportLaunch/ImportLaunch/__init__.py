@@ -295,6 +295,9 @@ class ImportLaunch(PluginBase):
                     if tag == "Test" and "name" not in attributes.keys():
                         core.set_attribute(child_node, "name", "")
 
+                    if tag == "Group" and "name" not in attributes.keys():
+                        core.set_attribute(child_node, "name", "")
+
                     for attr, value in attributes.items():
                         attribute_value = core.get_attribute(child_node, attr)
                         
