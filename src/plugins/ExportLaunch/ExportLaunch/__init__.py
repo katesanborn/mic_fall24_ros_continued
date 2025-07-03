@@ -164,6 +164,8 @@ class ExportLaunch(PluginBase):
                     arg_value = core.get_attribute(child, 'value')
                     default = core.get_attribute(child, 'default')
                     doc = core.get_attribute(child, 'doc')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
 
                     if arg_name:
                         attributes.append(f'name="{escape(arg_name)}"')
@@ -173,6 +175,10 @@ class ExportLaunch(PluginBase):
                         attributes.append(f'default="{escape(default)}"')
                     if doc:
                         attributes.append(f'doc="{escape(doc)}"')
+                    if if_attr:
+                        attributes.append(f'if="{escape(if_attr)}"')
+                    if unless:
+                        attributes.append(f'unless="{escape(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -236,11 +242,17 @@ class ExportLaunch(PluginBase):
                     
                     remap_from = core.get_attribute(child, 'from')
                     remap_to = core.get_attribute(child, 'to')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
                         
                     if remap_from:
                         attributes.append(f'from="{escape(remap_from)}"')
                     if remap_to:
                         attributes.append(f'to="{escape(remap_to)}"')
+                    if if_attr:
+                        attributes.append(f'if="{escape(if_attr)}"')
+                    if unless:
+                        attributes.append(f'unless="{escape(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                         
@@ -307,7 +319,9 @@ class ExportLaunch(PluginBase):
                     value = core.get_attribute(child, 'value')
                     binfile = core.get_attribute(child, 'binfile')
                     textfile = core.get_attribute(child, 'textfile')
-                    type = core.get_attribute(child, 'type')
+                    type_attr = core.get_attribute(child, 'type')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
                     
                     if name:
                         attributes.append(f'name="{escape(name)}"')
@@ -319,8 +333,12 @@ class ExportLaunch(PluginBase):
                         attributes.append(f'binfile="{escape(binfile)}"')
                     if textfile:
                         attributes.append(f'textfile="{escape(textfile)}"')
-                    if type:
-                        attributes.append(f'type="{escape(type)}"')
+                    if type_attr:
+                        attributes.append(f'type="{escape(type_attr)}"')
+                    if if_attr:
+                        attributes.append(f'if="{escape(if_attr)}"')
+                    if unless:
+                        attributes.append(f'unless="{escape(unless)}"')
                         
                     attribute_string = " ".join(attributes)
                     
@@ -335,6 +353,8 @@ class ExportLaunch(PluginBase):
                     param = core.get_attribute(child, 'param')
                     ns = core.get_attribute(child, 'ns')
                     subst_value = core.get_attribute(child, 'subst_value')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
                     
                     if command:
                         attributes.append(f'command="{escape(command)}"')
@@ -346,6 +366,10 @@ class ExportLaunch(PluginBase):
                         attributes.append(f'ns="{escape(ns)}"')
                     if subst_value == False:
                         attributes.append(f'subst_value="{str(subst_value).lower()}"')
+                    if if_attr:
+                        attributes.append(f'if="{escape(if_attr)}"')
+                    if unless:
+                        attributes.append(f'unless="{escape(unless)}"')
                     
                     attribute_string = " ".join(attributes)
                     
@@ -363,6 +387,8 @@ class ExportLaunch(PluginBase):
                     user = core.get_attribute(child, 'user')
                     password = core.get_attribute(child, 'password')
                     timeout = core.get_attribute(child, 'timeout')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
                     
                     if name:
                         attributes.append(f'name="{escape(name)}"')
@@ -378,6 +404,10 @@ class ExportLaunch(PluginBase):
                         attributes.append(f'password="{escape(password)}"')
                     if timeout != 10:
                         attributes.append(f'timeout="{timeout}"')
+                    if if_attr:
+                        attributes.append(f'if="{escape(if_attr)}"')
+                    if unless:
+                        attributes.append(f'unless="{escape(unless)}"')
                         
                     attribute_string = " ".join(attributes)
                         
@@ -390,11 +420,17 @@ class ExportLaunch(PluginBase):
                     
                     name = core.get_attribute(child, 'name')
                     value = core.get_attribute(child, 'value')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
                     
                     if name:
                         attributes.append(f'name="{escape(name)}"')
                     if value:
                         attributes.append(f'value="{escape(value)}"')
+                    if if_attr:
+                        attributes.append(f'if="{escape(if_attr)}"')
+                    if unless:
+                        attributes.append(f'unless="{escape(unless)}"')
                         
                     attribute_string = " ".join(attributes)
                         
@@ -414,6 +450,8 @@ class ExportLaunch(PluginBase):
                     ns = core.get_attribute(child, 'ns')
                     retry = core.get_attribute(child, 'retry')
                     time_limit = core.get_attribute(child, 'time-limit')
+                    if_attr = core.get_attribute(child, 'if')
+                    unless = core.get_attribute(child, 'unless')
                     
                     if pkg:
                         attributes.append(f'pkg="{escape(pkg)}"')
@@ -436,7 +474,11 @@ class ExportLaunch(PluginBase):
                     if retry:
                         attributes.append(f'retry="{retry}"')
                     if time_limit != 60:
-                        attributes.append(f'time-limit="{time_limit}"')    
+                        attributes.append(f'time-limit="{time_limit}"')
+                    if if_attr:
+                        attributes.append(f'if="{escape(if_attr)}"')
+                    if unless:
+                        attributes.append(f'unless="{escape(unless)}"')
                         
                     attribute_string = " ".join(attributes)
                     
